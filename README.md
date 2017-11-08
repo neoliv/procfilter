@@ -1,4 +1,5 @@
-# Telegraf plugin: procfilter
+# Procfilter
+Telegraf plugin to replace procstat
 
 ## Description
 
@@ -360,3 +361,4 @@ In the github directory for this plugin you will find a complete dashboard ready
 ## Tehcnical notes
 
 On linux if the telegraf process has root privileges it will ()try to) use the Netlink kernel socket to get a more accurate accounting of short lived processes.
+
