@@ -1,9 +1,38 @@
 # Procfilter
-Telegraf plugin to replace procstat
+
+Telegraf plugin that gathers metrics related to processes (CPU, RSS, ...). It is a bit like the default procstat but offers a lot more options.
 
 ## Description
 
-The procfilter plugin monitors system resource usage by process or groups of processes.
+The procfilter plugin monitors system resource usage by process or group of processes. If offers filters to choose what processes you want to monitor. You can place processes in groups to get synthetic values (eg: get the total CPU usage of the user joe by putting all its processes in one single process set.)
+
+This plugin has been created to improve upon the default procstat plugin that is able to collect per process metrics but is not able to aggregate processes metrics (or filter using complex rules).
+
+
+## Install
+
+Once you have your telegraf git clone:
+```
+go get github.com/influxdata/telegraf
+```
+
+Create a clone of the procfilter plugin inside the telegraf source tree (and run the script graft-plugin.sh to fix the relevant telegraf files):  
+```
+cd $GOPATH/src/github.com/influxdata/telegraf/plugins/inputs/
+git clone github.con/neoliv/procfilter
+cd procfilter
+./graft-plugin.sh
+```
+Then build your own patched telegraf binary:
+```
+cd $GOPATH/src/github.com/influxdata/telegraf
+make
+# the binary telegraf is in .
+# or if you prefer rpm/deb packages:
+make packages
+```
+
+## Configuration
 
 The description of what you want to measure is done using a simple language (in the script= or script_file= configuration option)
 
