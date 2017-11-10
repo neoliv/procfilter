@@ -11,7 +11,7 @@ This plugin has been created to improve upon the default procstat plugin that is
 
 ## Install
 
-Once you have your telegraf git clone:
+You need to clone the telegraf git repository:
 ```
 go get github.com/influxdata/telegraf
 ```
@@ -33,6 +33,9 @@ make packages
 ```
 
 ## Configuration
+
+
+You can find a real world configuration file (with the grafana json to build a dashboard showing the metrics). Below is the pseudo-formal description of the sconfiguration syntax with some toy samples.
 
 The description of what you want to measure is done using a simple language (in the script= or script_file= configuration option)
 
