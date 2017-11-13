@@ -1,8 +1,8 @@
 {
   "__inputs": [
     {
-      "name": "DS_LOCAL-INFLUX-TELEGRAF",
-      "label": "local-influx-telegraf",
+      "name": "DS_INFLUXDB",
+      "label": "InfluxDB",
       "description": "",
       "type": "datasource",
       "pluginId": "influxdb",
@@ -11,54 +11,784 @@
   ],
   "__requires": [
     {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "4.1.2"
+    },
+    {
       "type": "panel",
       "id": "graph",
       "name": "Graph",
       "version": ""
     },
     {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "3.1.1"
-    },
-    {
       "type": "datasource",
       "id": "influxdb",
       "name": "InfluxDB",
       "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "text",
+      "name": "Text",
+      "version": ""
     }
   ],
-  "id": null,
-  "title": "Procfilter",
-  "description": "Sample dashboards based on the telegraf procfilter input plugin.",
-  "tags": [
-    "procfilter"
-  ],
-  "style": "dark",
-  "timezone": "utc",
+  "annotations": {
+    "list": [
+      {
+        "datasource": "${DS_INFLUXDB}",
+        "enable": true,
+        "iconColor": "rgb(96, 161, 255)",
+        "name": "yum",
+        "query": "SELECT * FROM telegraf.short_term.\"lp.sys.yum\" WHERE \"host\" = '$Host' AND $timeFilter limit 10",
+        "tagsColumn": "action",
+        "textColumn": "",
+        "titleColumn": "rpm"
+      },
+      {
+        "datasource": "${DS_INFLUXDB}",
+        "enable": true,
+        "iconColor": "rgba(255, 96, 96, 1)",
+        "limit": 100,
+        "name": "messages",
+        "query": "SELECT * FROM telegraf.short_term.\"lp.sys.messages\" WHERE \"host\" = '$Host' AND $timeFilter limit 10",
+        "textColumn": "infos",
+        "titleColumn": "OOM",
+        "type": "alert"
+      }
+    ]
+  },
   "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
   "hideControls": false,
-  "sharedCrosshair": false,
+  "id": null,
+  "links": [
+    {
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [
+        "Openos"
+      ],
+      "type": "dashboards"
+    }
+  ],
+  "refresh": "20s",
   "rows": [
     {
       "collapse": false,
-      "editable": true,
       "height": "200px",
       "panels": [
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "${DS_LOCAL-INFLUX-TELEGRAF}",
+          "datasource": "${DS_INFLUXDB}",
           "editable": true,
           "error": false,
           "fill": 2,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          "grid": {},
+          "id": 3,
+          "interval": ">20s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
           },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 2,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "i/o wait",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "10s",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_user",
+              "policy": "default",
+              "query": "SELECT mean(\"usage_iowait\") FROM \"cpu\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval)",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                }
+              ]
+            },
+            {
+              "alias": "system",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "10s",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_user",
+              "policy": "default",
+              "query": "SELECT mean(\"usage_system\") FROM \"cpu\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval)",
+              "rawQuery": true,
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                }
+              ]
+            },
+            {
+              "alias": "user",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "10s",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_user",
+              "policy": "default",
+              "query": "SELECT mean(\"usage_user\") FROM \"cpu\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval)",
+              "rawQuery": true,
+              "refId": "C",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "CPU on $Host",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "percent",
+              "logBase": 1,
+              "max": 100,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "percent",
+              "logBase": 1,
+              "max": 100,
+              "min": 0,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 2,
+          "grid": {},
+          "id": 1,
+          "interval": ">20s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": true,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 2,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "% used memory",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "hide": false,
+              "measurement": "mem",
+              "policy": "default",
+              "query": "SELECT 100-min(\"available_percent\") FROM \"mem\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval)",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Memory on $Host",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "percent",
+              "label": "",
+              "logBase": 1,
+              "max": 100,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": "",
+              "logBase": 1,
+              "max": 100,
+              "min": 0,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 2,
+          "grid": {},
+          "id": 5,
+          "interval": ">20s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 2,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "% used swap",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "swap_free",
+              "policy": "default",
+              "query": "SELECT max(\"used_percent\") FROM \"swap\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval)",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Swap on $Host",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "percent",
+              "logBase": 1,
+              "max": 100,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "percent",
+              "logBase": 1,
+              "max": 100,
+              "min": 0,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 2,
+          "grid": {},
+          "id": 14,
+          "interval": ">20s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 2,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "blocked",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_iowait",
+              "policy": "default",
+              "query": "SELECT mean(\"blocked\") FROM \"processes\" WHERE host = '$Host' AND $timeFilter GROUP BY time($interval),interface",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                },
+                {
+                  "condition": "AND",
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                }
+              ]
+            },
+            {
+              "alias": "running",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_iowait",
+              "policy": "default",
+              "query": "SELECT mean(\"running\") FROM \"processes\" WHERE host = '$Host' AND $timeFilter GROUP BY time($interval),interface",
+              "rawQuery": true,
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                },
+                {
+                  "condition": "AND",
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                }
+              ]
+            },
+            {
+              "alias": "paging",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_iowait",
+              "policy": "default",
+              "query": "SELECT mean(\"paging\") FROM \"processes\" WHERE host = '$Host' AND $timeFilter GROUP BY time($interval),interface",
+              "rawQuery": true,
+              "refId": "C",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                },
+                {
+                  "condition": "AND",
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                }
+              ]
+            },
+            {
+              "alias": "sleeping",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_iowait",
+              "policy": "default",
+              "query": "SELECT mean(\"sleeping\") FROM \"processes\" WHERE host = '$Host' AND $timeFilter GROUP BY time($interval),interface",
+              "rawQuery": true,
+              "refId": "D",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                },
+                {
+                  "condition": "AND",
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Processes on $Host",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "none",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "none",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "content": "# Help\nEach row of this dashboard displays graphs with processes grouped using diffrerent methods.  \nThis row is a global server view to help see at a glance if a server is in trouble. Next rows should help you find the culprit.  \nNote: RAM: the used % shown here is not counting reclaimable memory (like cache of buffers). \n",
+          "editable": true,
+          "error": false,
+          "id": 39,
+          "links": [],
+          "mode": "markdown",
+          "span": 4,
+          "title": "Server view",
+          "type": "text"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "System load on $Host",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": "200px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {},
           "id": 17,
           "interval": ">20s",
           "legend": {
@@ -81,7 +811,7 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
-          "span": 3,
+          "span": 2,
           "stack": false,
           "steppedLine": false,
           "targets": [
@@ -132,6 +862,7 @@
               ]
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "CPU usage % by workload on $Host",
@@ -143,20 +874,23 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
               "format": "percent",
               "logBase": 1,
-              "max": 100,
+              "max": "105",
               "min": 0,
               "show": true
             },
             {
               "format": "percent",
               "logBase": 1,
-              "max": 100,
+              "max": "105",
               "min": 0,
               "show": true
             }
@@ -165,16 +899,11 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "${DS_LOCAL-INFLUX-TELEGRAF}",
+          "datasource": "${DS_INFLUXDB}",
           "editable": true,
           "error": false,
           "fill": 2,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 18,
           "interval": ">20s",
           "legend": {
@@ -197,7 +926,7 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
-          "span": 3,
+          "span": 2,
           "stack": false,
           "steppedLine": false,
           "targets": [
@@ -248,6 +977,7 @@
               ]
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Resident memory by workload  on $Host",
@@ -259,7 +989,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -281,16 +1014,11 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "${DS_LOCAL-INFLUX-TELEGRAF}",
+          "datasource": "${DS_INFLUXDB}",
           "editable": true,
           "error": false,
           "fill": 2,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 19,
           "interval": ">20s",
           "legend": {
@@ -313,7 +1041,7 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
-          "span": 3,
+          "span": 2,
           "stack": false,
           "steppedLine": false,
           "targets": [
@@ -364,6 +1092,7 @@
               ]
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Swap used by workload on $Host",
@@ -375,7 +1104,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -397,16 +1129,11 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "${DS_LOCAL-INFLUX-TELEGRAF}",
+          "datasource": "${DS_INFLUXDB}",
           "editable": true,
           "error": false,
           "fill": 2,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 20,
           "interval": ">20s",
           "legend": {
@@ -429,7 +1156,7 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
-          "span": 3,
+          "span": 2,
           "stack": false,
           "steppedLine": false,
           "targets": [
@@ -480,6 +1207,7 @@
               ]
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Number of processes by workload  on $Host",
@@ -491,7 +1219,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -509,502 +1240,153 @@
               "show": true
             }
           ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 2,
+          "grid": {},
+          "id": 31,
+          "interval": ">20s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "hideEmpty": true,
+            "hideZero": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 2,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$2",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "10s",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_user",
+              "policy": "default",
+              "query": "SELECT mean(\"iobps\") FROM /pf[.]wl[.].*/ WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval)",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "IO byte/s by workload  on $Host",
+          "tooltip": {
+            "msResolution": false,
+            "shared": false,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "Bps",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "Bps",
+              "logBase": 1,
+              "max": 100,
+              "min": 0,
+              "show": true
+            }
+          ]
+        },
+        {
+          "content": "A workload is a group of processes matching a set of (exclusive) rules.  \neg:  \n- root: all UID 0 processes not yet in a workload.\n- _other: all processes not yet in a workload.  ",
+          "editable": true,
+          "error": false,
+          "id": 35,
+          "links": [],
+          "mode": "markdown",
+          "span": 2,
+          "title": "by workload?",
+          "type": "text"
         }
       ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
       "showTitle": true,
-      "title": "Workload on $Host"
+      "title": "Workload on $Host",
+      "titleSize": "h6"
     },
     {
       "collapse": false,
-      "editable": true,
       "height": "250px",
       "panels": [
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "${DS_LOCAL-INFLUX-TELEGRAF}",
+          "datasource": "${DS_INFLUXDB}",
           "editable": true,
           "error": false,
-          "fill": 2,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 23,
-          "interval": ">20s",
-          "legend": {
-            "avg": false,
-            "current": false,
-            "hideEmpty": true,
-            "hideZero": true,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 3,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "alias": "$tag_cmd",
-              "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "interval": "10s",
-                  "params": [
-                    "auto"
-                  ],
-                  "type": "time"
-                }
-              ],
-              "measurement": "cpu_usage_user",
-              "policy": "default",
-              "query": "SELECT mean(\"cpu\") FROM \"pf.top.cmd.cpu\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval),\"cmd\"",
-              "rawQuery": true,
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": [
-                {
-                  "key": "cpu",
-                  "operator": "=~",
-                  "value": "/cpu[0-9]+/"
-                },
-                {
-                  "condition": "AND",
-                  "key": "host",
-                  "operator": "=",
-                  "value": "$Host"
-                }
-              ]
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Top CPU usage % by command on $Host",
-          "tooltip": {
-            "msResolution": false,
-            "shared": false,
-            "sort": 2,
-            "value_type": "cumulative"
-          },
-          "type": "graph",
-          "xaxis": {
-            "show": true
-          },
-          "yaxes": [
-            {
-              "format": "percent",
-              "logBase": 1,
-              "max": 100,
-              "min": 0,
-              "show": true
-            },
-            {
-              "format": "percent",
-              "logBase": 1,
-              "max": 100,
-              "min": 0,
-              "show": true
-            }
-          ]
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": "${DS_LOCAL-INFLUX-TELEGRAF}",
-          "editable": true,
-          "error": false,
-          "fill": 2,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 24,
-          "interval": ">20s",
-          "legend": {
-            "avg": false,
-            "current": false,
-            "hideEmpty": true,
-            "hideZero": true,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 3,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "alias": "$tag_cmd",
-              "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "interval": "10s",
-                  "params": [
-                    "auto"
-                  ],
-                  "type": "time"
-                }
-              ],
-              "measurement": "cpu_usage_user",
-              "policy": "default",
-              "query": "SELECT max(\"rss\") FROM \"pf.top.cmd.rss\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval),\"cmd\"",
-              "rawQuery": true,
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": [
-                {
-                  "key": "cpu",
-                  "operator": "=~",
-                  "value": "/cpu[0-9]+/"
-                },
-                {
-                  "condition": "AND",
-                  "key": "host",
-                  "operator": "=",
-                  "value": "$Host"
-                }
-              ]
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Top Resident memory by command on $Host",
-          "tooltip": {
-            "msResolution": false,
-            "shared": false,
-            "sort": 2,
-            "value_type": "cumulative"
-          },
-          "type": "graph",
-          "xaxis": {
-            "show": true
-          },
-          "yaxes": [
-            {
-              "format": "bytes",
-              "logBase": 1,
-              "max": null,
-              "min": 0,
-              "show": true
-            },
-            {
-              "format": "percent",
-              "logBase": 1,
-              "max": 100,
-              "min": 0,
-              "show": true
-            }
-          ]
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": "${DS_LOCAL-INFLUX-TELEGRAF}",
-          "editable": true,
-          "error": false,
-          "fill": 2,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 25,
-          "interval": ">20s",
-          "legend": {
-            "avg": false,
-            "current": false,
-            "hideEmpty": true,
-            "hideZero": true,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 3,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "alias": "$tag_cmd",
-              "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "interval": "10s",
-                  "params": [
-                    "auto"
-                  ],
-                  "type": "time"
-                }
-              ],
-              "measurement": "cpu_usage_user",
-              "policy": "default",
-              "query": "SELECT max(\"swap\") FROM \"pf.top.cmd.swap\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval),\"cmd\"",
-              "rawQuery": true,
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": [
-                {
-                  "key": "cpu",
-                  "operator": "=~",
-                  "value": "/cpu[0-9]+/"
-                },
-                {
-                  "condition": "AND",
-                  "key": "host",
-                  "operator": "=",
-                  "value": "$Host"
-                }
-              ]
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Top Swap used by command on $Host",
-          "tooltip": {
-            "msResolution": false,
-            "shared": false,
-            "sort": 2,
-            "value_type": "cumulative"
-          },
-          "type": "graph",
-          "xaxis": {
-            "show": true
-          },
-          "yaxes": [
-            {
-              "format": "bytes",
-              "logBase": 1,
-              "max": null,
-              "min": 0,
-              "show": true
-            },
-            {
-              "format": "percent",
-              "logBase": 1,
-              "max": 100,
-              "min": 0,
-              "show": true
-            }
-          ]
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": "${DS_LOCAL-INFLUX-TELEGRAF}",
-          "editable": true,
-          "error": false,
-          "fill": 2,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 26,
-          "interval": ">20s",
-          "legend": {
-            "avg": false,
-            "current": false,
-            "hideEmpty": true,
-            "hideZero": true,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 3,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "alias": "$tag_cmd",
-              "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "interval": "10s",
-                  "params": [
-                    "auto"
-                  ],
-                  "type": "time"
-                }
-              ],
-              "measurement": "cpu_usage_user",
-              "policy": "default",
-              "query": "SELECT mean(\"thread_nb\") FROM \"pf.top.cmd.thread_nb\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval),\"cmd\"",
-              "rawQuery": true,
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": [
-                {
-                  "key": "cpu",
-                  "operator": "=~",
-                  "value": "/cpu[0-9]+/"
-                },
-                {
-                  "condition": "AND",
-                  "key": "host",
-                  "operator": "=",
-                  "value": "$Host"
-                }
-              ]
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Top Number of threads  by command on $Host",
-          "tooltip": {
-            "msResolution": false,
-            "shared": false,
-            "sort": 2,
-            "value_type": "cumulative"
-          },
-          "type": "graph",
-          "xaxis": {
-            "show": true
-          },
-          "yaxes": [
-            {
-              "format": "none",
-              "logBase": 1,
-              "max": null,
-              "min": 0,
-              "show": true
-            },
-            {
-              "format": "percent",
-              "logBase": 1,
-              "max": 100,
-              "min": 0,
-              "show": true
-            }
-          ]
-        }
-      ],
-      "showTitle": true,
-      "title": "Load by command on $Host"
-    },
-    {
-      "collapse": false,
-      "editable": true,
-      "height": "250px",
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": "${DS_LOCAL-INFLUX-TELEGRAF}",
-          "editable": true,
-          "error": false,
-          "fill": 2,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "fill": 0,
+          "grid": {},
           "id": 27,
           "interval": ">20s",
           "legend": {
@@ -1027,7 +1409,7 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
-          "span": 3,
+          "span": 2,
           "stack": false,
           "steppedLine": false,
           "targets": [
@@ -1078,6 +1460,7 @@
               ]
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Top CPU usage % by user on $Host",
@@ -1089,20 +1472,23 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
               "format": "percent",
               "logBase": 1,
-              "max": 100,
+              "max": "105",
               "min": 0,
               "show": true
             },
             {
               "format": "percent",
               "logBase": 1,
-              "max": 100,
+              "max": "105",
               "min": 0,
               "show": true
             }
@@ -1111,16 +1497,11 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "${DS_LOCAL-INFLUX-TELEGRAF}",
+          "datasource": "${DS_INFLUXDB}",
           "editable": true,
           "error": false,
           "fill": 2,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 28,
           "interval": ">20s",
           "legend": {
@@ -1143,7 +1524,7 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
-          "span": 3,
+          "span": 2,
           "stack": false,
           "steppedLine": false,
           "targets": [
@@ -1194,6 +1575,7 @@
               ]
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Top Resident memory by user on $Host",
@@ -1205,7 +1587,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -1227,16 +1612,11 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "${DS_LOCAL-INFLUX-TELEGRAF}",
+          "datasource": "${DS_INFLUXDB}",
           "editable": true,
           "error": false,
           "fill": 2,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 29,
           "interval": ">20s",
           "legend": {
@@ -1259,7 +1639,7 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
-          "span": 3,
+          "span": 2,
           "stack": false,
           "steppedLine": false,
           "targets": [
@@ -1310,6 +1690,7 @@
               ]
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Top Swap used by user on $Host",
@@ -1321,7 +1702,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -1343,16 +1727,11 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "${DS_LOCAL-INFLUX-TELEGRAF}",
+          "datasource": "${DS_INFLUXDB}",
           "editable": true,
           "error": false,
           "fill": 2,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 30,
           "interval": ">20s",
           "legend": {
@@ -1375,7 +1754,7 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
-          "span": 3,
+          "span": 2,
           "stack": false,
           "steppedLine": false,
           "targets": [
@@ -1426,6 +1805,7 @@
               ]
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Top Number of processes by user on $Host",
@@ -1437,7 +1817,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -1455,14 +1838,2000 @@
               "show": true
             }
           ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {},
+          "id": 33,
+          "interval": ">20s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "hideEmpty": true,
+            "hideZero": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 2,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_user",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "10s",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_user",
+              "policy": "default",
+              "query": "SELECT mean(\"iobps\") FROM \"pf.top.by.user.iobps\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval),\"user\"",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Top IO byte/s by user on $Host",
+          "tooltip": {
+            "msResolution": false,
+            "shared": false,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "Bps",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "Bps",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            }
+          ]
+        },
+        {
+          "content": "Find the top resource intensive users.  \nThe _other.top.* aggregates other processes not owned by the top 5 (or 3) users.  ",
+          "editable": true,
+          "error": false,
+          "id": 37,
+          "links": [],
+          "mode": "markdown",
+          "span": 2,
+          "title": "by user?",
+          "type": "text"
         }
       ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
       "showTitle": true,
-      "title": "Load by user on $Host"
+      "title": "Load by user on $Host",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 2,
+          "grid": {},
+          "id": 23,
+          "interval": ">20s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "hideEmpty": true,
+            "hideZero": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 2,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_cmd",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "10s",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_user",
+              "policy": "default",
+              "query": "SELECT mean(\"cpu\") FROM \"pf.top.by.cmd.cpu\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval),\"cmd\"",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Top CPU usage % by command on $Host",
+          "tooltip": {
+            "msResolution": false,
+            "shared": false,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "percent",
+              "logBase": 1,
+              "max": "105",
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "percent",
+              "logBase": 1,
+              "max": "105",
+              "min": 0,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 2,
+          "grid": {},
+          "id": 24,
+          "interval": ">20s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "hideEmpty": true,
+            "hideZero": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 2,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_cmd",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "10s",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_user",
+              "policy": "default",
+              "query": "SELECT max(\"rss\") FROM \"pf.top.by.cmd.rss\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval),\"cmd\"",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Top Resident memory by command on $Host",
+          "tooltip": {
+            "msResolution": false,
+            "shared": false,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "bytes",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "percent",
+              "logBase": 1,
+              "max": 100,
+              "min": 0,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 2,
+          "grid": {},
+          "id": 25,
+          "interval": ">20s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "hideEmpty": true,
+            "hideZero": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 2,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_cmd",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "10s",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_user",
+              "policy": "default",
+              "query": "SELECT max(\"swap\") FROM \"pf.top.by.cmd.swap\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval),\"cmd\"",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Top Swap used by command on $Host",
+          "tooltip": {
+            "msResolution": false,
+            "shared": false,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "bytes",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "percent",
+              "logBase": 1,
+              "max": 100,
+              "min": 0,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 2,
+          "grid": {},
+          "id": 26,
+          "interval": ">20s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "hideEmpty": true,
+            "hideZero": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 2,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_cmd",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "10s",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_user",
+              "policy": "default",
+              "query": "SELECT mean(\"thread_nb\") FROM \"pf.top.by.cmd.thread_nb\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval),\"cmd\"",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Top Number of threads  by command on $Host",
+          "tooltip": {
+            "msResolution": false,
+            "shared": false,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "none",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "percent",
+              "logBase": 1,
+              "max": 100,
+              "min": 0,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {},
+          "id": 32,
+          "interval": ">20s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "hideEmpty": true,
+            "hideZero": true,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 2,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_cmd",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "10s",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_user",
+              "policy": "default",
+              "query": "SELECT mean(\"iobps\") FROM \"pf.top.by.cmd.iobps\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval),\"cmd\"",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Top IO byte/s by command on $Host",
+          "tooltip": {
+            "msResolution": false,
+            "shared": false,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "Bps",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "Bps",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            }
+          ]
+        },
+        {
+          "content": "Find the top resource intensive commands.  \nThe _other.top.* aggregates other processes not in the top 5 (or 3) commands.  ",
+          "editable": true,
+          "error": false,
+          "id": 36,
+          "links": [],
+          "mode": "markdown",
+          "span": 2,
+          "title": "by command?",
+          "type": "text"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "Load by command on $Host",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": "200px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 2,
+          "grid": {},
+          "id": 4,
+          "interval": ">20s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 2,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "load 1min",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "system_load1",
+              "policy": "default",
+              "query": "SELECT mean(\"load1\") FROM \"system\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval)",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                },
+                {
+                  "condition": " ",
+                  "key": " ",
+                  "operator": " ",
+                  "value": " "
+                }
+              ]
+            },
+            {
+              "alias": "load 5min",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_system",
+              "policy": "default",
+              "query": "SELECT mean(\"load5\") FROM \"system\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval)",
+              "rawQuery": true,
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                },
+                {
+                  "condition": "AND",
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                }
+              ]
+            },
+            {
+              "alias": "load 15min",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_user",
+              "policy": "default",
+              "query": "SELECT mean(\"load15\") FROM \"system\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval)",
+              "rawQuery": true,
+              "refId": "C",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                },
+                {
+                  "condition": "AND",
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "CPU load on $Host",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "none",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "none",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {},
+          "id": 34,
+          "interval": ">20s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": true,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 2,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "active memory",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "hide": false,
+              "measurement": "mem",
+              "policy": "default",
+              "query": "SELECT mean(\"active\") FROM \"mem\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval)",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                }
+              ]
+            },
+            {
+              "alias": "total memory",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "hide": false,
+              "measurement": "mem",
+              "policy": "default",
+              "query": "SELECT mean(\"total\") FROM \"mem\" WHERE \"host\" = '$Host' AND $timeFilter GROUP BY time($interval)",
+              "rawQuery": true,
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Memory activity on $Host",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "bytes",
+              "label": "",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": "",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 2,
+          "grid": {},
+          "id": 10,
+          "interval": ">60s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 2,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "swap out (mem to disk)",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "hide": false,
+              "measurement": "cpu_usage_iowait",
+              "policy": "default",
+              "query": "SELECT non_negative_derivative(last(\"out\"), 1s) FROM \"swap\" WHERE host = '$Host' AND $timeFilter GROUP BY time(20s)",
+              "rawQuery": true,
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                },
+                {
+                  "condition": "AND",
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                }
+              ]
+            },
+            {
+              "alias": "swap in (disk to mem)",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "hide": false,
+              "measurement": "cpu_usage_iowait",
+              "policy": "default",
+              "query": "SELECT  non_negative_derivative(last(\"in\"), 1s) FROM \"swap\" WHERE host = '$Host' AND $timeFilter GROUP BY time(20s)",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                },
+                {
+                  "condition": "AND",
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Swap activity on $Host",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "Bps",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "none",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 2,
+          "grid": {},
+          "id": 21,
+          "interval": ">20s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 2,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "recv $tag_interface",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_iowait",
+              "policy": "default",
+              "query": "SELECT non_negative_derivative(last(\"bytes_recv\"), 1s) FROM \"net\" WHERE host = '$Host' AND $timeFilter GROUP BY time($interval),interface",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                },
+                {
+                  "condition": "AND",
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                }
+              ]
+            },
+            {
+              "alias": "sent $tag_interface",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_iowait",
+              "policy": "default",
+              "query": "SELECT non_negative_derivative(last(\"bytes_sent\"), 1s) FROM \"net\" WHERE host = '$Host' AND $timeFilter GROUP BY time($interval),interface",
+              "rawQuery": true,
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                },
+                {
+                  "condition": "AND",
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Network activity on $Host",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "Bps",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "Bps",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {},
+          "id": 22,
+          "interval": ">20s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "hideEmpty": true,
+            "hideZero": true,
+            "max": false,
+            "min": false,
+            "rightSide": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 2,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "read $tag_name",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_iowait",
+              "policy": "default",
+              "query": "SELECT non_negative_derivative(last(\"read_bytes\"),1s) FROM \"diskio\" WHERE host = '$Host' AND $timeFilter GROUP BY time($interval),\"name\"",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                },
+                {
+                  "condition": "AND",
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                }
+              ]
+            },
+            {
+              "alias": "write $tag_name",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "cpu_usage_iowait",
+              "policy": "default",
+              "query": "SELECT non_negative_derivative(last(\"write_bytes\"),1s) FROM \"diskio\" WHERE host = '$Host' AND $timeFilter GROUP BY time($interval),\"name\"",
+              "rawQuery": true,
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=",
+                  "value": "$Host"
+                },
+                {
+                  "condition": "AND",
+                  "key": "cpu",
+                  "operator": "=~",
+                  "value": "/cpu[0-9]+/"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Disk activity on $Host",
+          "tooltip": {
+            "msResolution": false,
+            "shared": false,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "Bps",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "Bps",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "content": "Load: number of processes in the run queue.  \nActive memory: frequetly accessed RAM.  \nSwap: RAM pages read/write to disk.  \n",
+          "editable": true,
+          "error": false,
+          "id": 38,
+          "links": [],
+          "mode": "markdown",
+          "span": 2,
+          "title": "activity?",
+          "type": "text"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "Activity on $Host",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": "500px",
+      "panels": [
+        {
+          "columns": [
+            {
+              "text": "Current",
+              "value": "current"
+            }
+          ],
+          "editable": true,
+          "error": false,
+          "fontSize": "100%",
+          "id": 16,
+          "links": [],
+          "pageSize": 200,
+          "scroll": true,
+          "showHeader": true,
+          "sort": {
+            "col": 0,
+            "desc": false
+          },
+          "span": 6,
+          "styles": [
+            {
+              "colorMode": null,
+              "colors": [
+                "rgba(245, 54, 54, 0.9)",
+                "rgba(237, 129, 40, 0.89)",
+                "rgba(50, 172, 45, 0.97)"
+              ],
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "decimals": 2,
+              "pattern": "/.*/",
+              "thresholds": [],
+              "type": "string",
+              "unit": "none"
+            }
+          ],
+          "targets": [
+            {
+              "alias": "OS",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "hide": true,
+              "policy": "default",
+              "query": "SELECT last(\"os\") FROM \"server_info\" WHERE host='$Host' AND time > now() - 48h",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": []
+            },
+            {
+              "alias": "Stack",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "policy": "default",
+              "query": "SELECT last(\"bh\") FROM \"server_info\" WHERE host='$Host' AND time > now() - 48h",
+              "rawQuery": true,
+              "refId": "C",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": []
+            },
+            {
+              "alias": "RedHat",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "policy": "default",
+              "query": "SELECT last(\"rh\") FROM \"server_info\" WHERE host='$Host' AND time > now() - 48h",
+              "rawQuery": true,
+              "refId": "D",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": []
+            },
+            {
+              "alias": "CPU",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "policy": "default",
+              "query": "SELECT last(\"cpu_model\") FROM \"server_info\" WHERE host='$Host' AND time > now() - 48h",
+              "rawQuery": true,
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": []
+            },
+            {
+              "alias": "CPUs",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "policy": "default",
+              "query": "SELECT last(\"cpu_nb\") FROM \"server_info\" WHERE host='$Host' AND time > now() - 48h",
+              "rawQuery": true,
+              "refId": "H",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": []
+            },
+            {
+              "alias": "kernel",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "policy": "default",
+              "query": "SELECT last(\"kernel\") FROM \"server_info\" WHERE host='$Host' AND time > now() - 48h",
+              "rawQuery": true,
+              "refId": "E",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": []
+            },
+            {
+              "alias": "Install",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "policy": "default",
+              "query": "SELECT lastt(\"install_date\") FROM \"server_info\" WHERE host='$Host' AND time > now() - 48h",
+              "rawQuery": true,
+              "refId": "F",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": []
+            },
+            {
+              "alias": "cores",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "policy": "default",
+              "query": "SELECT last(\"cpu_nb\") FROM \"server_info\" WHERE host='$Host' AND time > now() - 48h",
+              "rawQuery": true,
+              "refId": "G",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": []
+            }
+          ],
+          "title": "$Host",
+          "transform": "timeseries_aggregations",
+          "type": "table"
+        },
+        {
+          "content": "These graphs should help you check the server activity with a fine time resolution (one sample every 10s or 20s).Data retention is only two weeks so old data are not available at this resolution.\nSee the 'Openos long term' link at the top right of this page for older data with a coarser one hour resolution.  \nIf you want more graphs (about file systems, network, ...) please click on 'Openos details' link at the top right of this page.  \nFeel free to contact DI VB ME for help (BP\\_METRO\\_DGSI)  ",
+          "editable": true,
+          "error": false,
+          "id": 13,
+          "links": [],
+          "mode": "markdown",
+          "span": 6,
+          "style": {},
+          "title": "Help",
+          "type": "text"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "Server informations for $Host",
+      "titleSize": "h6"
     }
   ],
+  "schemaVersion": 14,
+  "style": "dark",
+  "tags": [
+    "Live",
+    "Openos"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allFormat": "glob",
+        "allValue": null,
+        "current": {},
+        "datasource": "${DS_INFLUXDB}",
+        "hide": 0,
+        "includeAll": false,
+        "label": "",
+        "multi": false,
+        "multiFormat": "glob",
+        "name": "Host",
+        "options": [],
+        "query": "show tag values from telegraf.short_term.mem with key=host",
+        "refresh": 1,
+        "refresh_on_load": false,
+        "regex": "/^[^h].*/",
+        "sort": 0,
+        "tagValuesQuery": null,
+        "tags": [],
+        "tagsQuery": null,
+        "type": "query",
+        "useTags": false
+      }
+    ]
+  },
   "time": {
-    "from": "now/d",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {
@@ -1492,33 +3861,7 @@
     ],
     "type": "timepicker"
   },
-  "templating": {
-    "list": [
-      {
-        "allFormat": "glob",
-        "current": {},
-        "datasource": "${DS_LOCAL-INFLUX-TELEGRAF}",
-        "hide": 0,
-        "includeAll": false,
-        "label": "",
-        "multi": false,
-        "multiFormat": "glob",
-        "name": "Host",
-        "options": [],
-        "query": "show tag values from telegraf.short_term.mem with key=host",
-        "refresh": 1,
-        "refresh_on_load": false,
-        "regex": "/^[^h].*/",
-        "type": "query"
-      }
-    ]
-  },
-  "annotations": {
-    "list": []
-  },
-  "refresh": false,
-  "schemaVersion": 12,
-  "version": 1,
-  "links": [],
-  "gnetId": null
+  "timezone": "utc",
+  "title": "Openos WL",
+  "version": 6
 }
