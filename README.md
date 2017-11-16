@@ -32,6 +32,8 @@ make
 make packages
 ```
 
+Note that graft-plugin can also be used to remove some unwanted plugins from the build (eg: for security concerns). Use -h to learn more about this feature.  
+
 ## Configuration
 
 
