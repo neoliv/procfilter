@@ -146,11 +146,11 @@ func (p *procStat) CPU() (float32, error) {
 		if p.prevUpdTime != 0 {
 			// We have a complete sample. (usual case for long lived processes_
 			jiffies = p.cpu - p.prevCpu
-		} /* else if p.startTime > curProcFilter.prevSampleStart {
+		} else if p.startTime > curProcFilter.prevSampleStart {
 			// First sample for this process.
 			// But the process started during this interval soe know that these jiffies belong to this sample.
 			jiffies = p.cpu
-		}*/ /*else {
+		} /*else {
 			// We don't know enough to assign these jiffies.
 			// TODO we could try to guess a prorata using startime?
 			jiffies = 0
