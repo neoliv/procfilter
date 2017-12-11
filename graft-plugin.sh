@@ -36,6 +36,8 @@ inputs/processus
 inputs/procfilter
 inputs/swap
 inputs/system
+inputs/postgresql
+inputs/postgresql_extensible
 outputs/influxdb
 '
 
