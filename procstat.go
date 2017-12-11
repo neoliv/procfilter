@@ -94,9 +94,9 @@ func (p *procStat) String() string {
 	}
 	cl := p.cmdLine[:l]
 	if !p.IsThread() {
-		return fmt.Sprintf("-- pid=%d ppid=%d state=%d rss=%d cmd=%s cl=%s", p.pid, p.ppid, p.status, p.rss, p.cmd, cl)
+		return fmt.Sprintf("-- pid=%d ppid=%d state=%d cpu=%f%% rss=%d cmd=%s cl=%s", p.pid, p.ppid, p.status, p.cpupc, p.rss, p.cmd, cl)
 	} else { // thread
-		return fmt.Sprintf("----- pid=%d ppid=%d tgid=%d state=%d rss=%d cmd=%s cl=%s", p.pid, p.ppid, p.tgid, p.status, p.rss, p.cmd, cl)
+		return fmt.Sprintf("----- pid=%d ppid=%d tgid=%d state=%d cpu=%f%% rss=%d cmd=%s cl=%s", p.pid, p.ppid, p.tgid, p.status, p.cpupc, p.rss, p.cmd, cl)
 	}
 }
 

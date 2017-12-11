@@ -17,6 +17,7 @@ import (
 )
 
 var curProcFilter *ProcFilter // TODO: refactor. we this ugly global we probably loose the ability to get more thatn one procfilter in the same telegraf process.
+var Debug int64 = 0
 
 type ProcFilter struct {
 	Script             string  // The script containing commands to process.
@@ -26,7 +27,8 @@ type ProcFilter struct {
 	Field_prefix       string  // String prefix added to all field names.
 	Netlink            bool    // Try to use Netlink to get more accurate metrics on short-lived processes?
 	Wakeup_interval    int64   // in ms. How often do we wake up to update some stats (only for some young processes, not all processes)
-	Update_age_ratio   float64 // last_update/age ratio to trigger a new update
+	Update_age_ratio   float64 // last_update/age ratio to trigger a new update.
+	Debug              int64   // Debug mask.
 	parser             *Parser
 	parseOK            bool    // Script parsed OK?
 	netlinkOk          bool    // Using netlink?
@@ -38,7 +40,7 @@ type ProcFilter struct {
 }
 
 func NewProcFilter() *ProcFilter {
-	p := &ProcFilter{Measurement_prefix: "pf.", Netlink: true, Wakeup_interval: 100, Update_age_ratio: 0.5}
+	p := &ProcFilter{Measurement_prefix: "pf.", Netlink: true, Wakeup_interval: 100, Update_age_ratio: 0.5, Debug: 0}
 	curProcFilter = p
 	return p
 }
@@ -127,7 +129,10 @@ func (p *ProcFilter) init() {
 			}
 		} else {
 			logWarning("Gathering data without Netlink and fast update. This is less accurate for short lived processes but it does not require root permissions and may use less resources.")
-
+		}
+		if p.Debug != 0 {
+			logWarning(fmt.Sprintf("Debug mode %d. May use more resources.", p.Debug))
+			Debug = p.Debug // Need a global to read it in obscure corners of the code.
 		}
 	}
 }

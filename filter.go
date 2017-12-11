@@ -151,6 +151,10 @@ func (f *revarFilter) Apply() error {
 				orig, _ = s.Exe()
 			case "cmdline", "cmd_line":
 				orig, _ = s.CmdLine()
+			case "user":
+				orig, _ = s.User()
+			case "group":
+				orig, _ = s.Group()
 			default: // Assume the criteria is in fact a variable name.
 				orig = s.Var(f.crit)
 			}
