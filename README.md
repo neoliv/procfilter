@@ -11,6 +11,9 @@ This plugin has been created to improve upon the default procstat plugin that is
 
 ## Install
 
+You need a working go environment. See the golang install documentation. 
+https://golang.org/doc/install
+ 
 You need to clone the telegraf git repository:
 ```
 go get github.com/influxdata/telegraf
