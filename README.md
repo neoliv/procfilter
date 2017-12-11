@@ -1,6 +1,6 @@
 # Procfilter
 
-Telegraf plugin that gathers metrics related to processes (CPU, RSS, ...). It is a bit like the default procstat but offers a lot more options.
+Procfilter is a telegraf plugin that gathers metrics related to processes (CPU, RSS, ...). It is a bit like the default procstat but offers a lot more options.
 
 ## Description
 
@@ -236,17 +236,17 @@ eg: `packby(user)`
 Build aggregates of processes by owner (user).  
 
 
-## User defined fields.
+## User defined fields
 
-If you need to pack processes using a criteria that is not available you can sythetise your own.
+If you need to pack processes using a criteria that is not available you can synthetize your own.
 revar(criteria,'matching re','replacment re','new field name', input)
 eg: `oracle_sid <- revar(exe,'ora_[^_]+_([0-9a-zA-Z]+)|oracle([0-9a-zA-Z]+).*','$1',oracle_sid,user('oracle')`
-The revar() will not filter out any processes but will sythetise a new filed 'oracle_sid' that is the result of the regular expression replacment on the command name to extract the SID. Note the use of the group syntax $1 to use part of the matching RE in the final replacment. 
-
+The revar() will not filter out any processes but will synthetize a new field 'oracle_sid' that is the result of the regular expression find/replace on the command name to extract the SID. Note the use of the group syntax $1 to use part of the matching RE in the final value. 
+As a criteria you can use cmd, cmd_line, exe, user, group or a previously synthetized user field.
 
 ## Criteria
 
-Top, exceed, packby, ... use a criteria to specify what metric to use.
+Top, exceed, packby, ... use a criteria to specify what numeric metric to use.
 eg: `top(vsz,1)`  
 'vsz' is the virtual memory size of a process and top will select the biggest process according to this criteria.  
 
@@ -301,10 +301,10 @@ String delimiters " and ' can be used indifferently.
 eg: `"joe"` and `'joe'`.  
 
 Identifiers are case insensitive.  
-eg: `Top(Apache)` and `top(apache)`  
+eg: `Top(Apache)` and `top(apache)` are identical.   
 
 Identifiers are made of letters, digits '.' or '_'.
-
+eg: `wl.top5_users` 
 
 ## Tags
 
@@ -312,7 +312,7 @@ A measurement may have a tags() declaration.
 This will specify what values will be output as tags for this measurement.  
 eg: `m1 = tag(cmd,user) <- cmd('sh$'r)`  
 This measurement 'm1' will emit tags with the shell name and user name for all processes with command name ending with 'sh'.  
-In line protocole it will look something like:
+In line protocol it will look something like:
 ```m1,cmd="nosh",user="bart"
 m1,cmd="bash",user="maggy"
 ```  
@@ -328,7 +328,7 @@ exe
 path
 pid
 
-Note that pid could be considered harmful for your influxdb performance until the cardinality issues are less problematic. (as of influxDB 1.4 this is still an issue)  
+Note that pid could be considered harmful for your influxdb performance until the cardinality issues are less problematic. (as of influxDB 1.4 the tsi1 engine is still an work in progress). 
 
 
 
@@ -392,7 +392,7 @@ Feel free to send me your own scripts to be used as examples.
 In the github directory for this plugin you will find a complete dashboard ready for import in grafana and the corresponding telegraf configuration (grafana.json, procfilter.conf). Please use and abuse it and report your improvments.  
 
 
-## Tehcnical notes
+## Technical notes
 
-On linux if the telegraf process has root privileges it will ()try to) use the Netlink kernel socket to get a more accurate accounting of short lived processes.
+On linux if the telegraf process has root privileges it can (try to) use the Netlink kernel socket to get a more accurate accounting of short lived processes. This is not activated by default due to a potentialy higher CPU usage but can be useful in some cases (use `netlink = true` in the configuration file.)
 
