@@ -7,8 +7,11 @@ cro configuration language is quite simple to parse anyway.
 https://blog.gopheracademy.com/advent-2014/parsers-lexers/
 */
 import (
+	"bufio"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -465,4 +468,32 @@ func (p *Parser) parseArgSep() error {
 		return nil
 	}
 	return p.syntaxError(fmt.Sprintf("found %q, expecting ','  or ')'", lit))
+}
+
+// Preprocess a script (include, ...)
+func preprocess(s string) string {
+	var ns string
+	var reinc = regexp.MustCompile(`^[[:space:]]*include[[:space:]]*[(][[:space:]]*["']([^"']*)["'][[:space:]]*[)][[:space:]]*(#.*)?$`)
+	scanner := bufio.NewScanner(strings.NewReader(s))
+	for scanner.Scan() {
+		l := scanner.Text()
+		m := reinc.FindStringSubmatch(l)
+		if m == nil {
+			// normal, non include line.
+			ns += l + "\n"
+		} else {
+			incf := m[1]
+			inc, err := ioutil.ReadFile(incf)
+			if err != nil {
+				ns += "# FAILED " + l + "\n"
+				continue
+			}
+			if (inc[len(inc)-1:])[0] != byte('\n') {
+				// Be sure to have a \n at then end of the included file.
+				inc = append(inc, byte('\n'))
+			}
+			ns += fmt.Sprintf("#BEGIN %s\n%s# END %s", incf, inc, incf)
+		}
+	}
+	return ns
 }

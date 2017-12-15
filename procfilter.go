@@ -101,6 +101,7 @@ func (p *ProcFilter) init() {
 		p.Script = s
 	}
 	// Init and parse the script to build the AST.
+	p.Script = preprocess(p.Script)
 	p.parser = NewParser(strings.NewReader(p.Script))
 	err := p.parser.Parse()
 	if err != nil {
