@@ -105,6 +105,7 @@ func (p *ProcFilter) init() {
 	err := p.parser.Parse()
 	if err != nil {
 		logErr(err.Error())
+		displayScript(p.Script, p.parser.eln, p.parser.ecn)
 		return
 	}
 	p.parseOK = true
@@ -112,7 +113,7 @@ func (p *ProcFilter) init() {
 	logInfo(fmt.Sprintf("Found %d measurements and %d filters.", len(p.parser.measurements), len(p.parser.filters)))
 	// A ProcFilter has an associated goroutine that will refresh some values at a High Frequency .
 	// (faster than the frequency that telegraf calls the plugin)
-	if p.parseOK && len(p.parser.measurements) > 0 {
+	if len(p.parser.measurements) > 0 {
 		p.newSample() // Make sure the 0 sample stamp value is never used for a real sample.
 		if p.Netlink {
 			// Setup a Netlink socket to get process events directly from the Linux kernel (better than sampling /proc).
@@ -133,6 +134,7 @@ func (p *ProcFilter) init() {
 		if p.Debug != 0 {
 			logWarning(fmt.Sprintf("Debug mode %d. May use more resources.", p.Debug))
 			Debug = p.Debug // Need a global to read it in obscure corners of the code.
+			displayScript(p.Script, -1, -1)
 		}
 	}
 }

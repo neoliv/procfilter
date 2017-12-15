@@ -22,6 +22,8 @@ type Parser struct {
 	filters      []filter                // the order of declaration of all root filters (measurements or named filters)
 	measurements []*measurement
 	rewrites     []filter // special rewrite filters
+	eln          int      // last error line number
+	ecn          int      // lst error col number
 	buf          struct {
 		tok tokenType // last read token
 		lit string    // last read literal
@@ -29,7 +31,7 @@ type Parser struct {
 	}
 }
 
-var currentParser *Parser         // ugly, should be par of the filter context but would need a lot of code boiler, until proven otherwise this is good enough.
+var currentParser *Parser // ugly, should be par of the filter context but would need a lot of code boiler, until proven otherwise this is good enough.
 
 // NewParser returns a new instance of Parser. Beware only one active parser at a time.
 func NewParser(r io.Reader) *Parser {
@@ -46,6 +48,8 @@ func NewParser(r io.Reader) *Parser {
 
 // syntaxError build a syntax error string with position information
 func (p *Parser) syntaxError(msg string) error {
+	p.eln = p.s.stLine + 1
+	p.ecn = p.s.stPos + 1
 	return fmt.Errorf("%s (%s)", msg, p.s.posInfo())
 }
 

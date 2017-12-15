@@ -1,6 +1,7 @@
 package procfilter
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -435,4 +436,23 @@ func findNextIndex(s []byte, start int, char byte) int {
 		}
 	}
 	return sl
+}
+
+func displayScript(s string, eln, ecn int) {
+	scanner := bufio.NewScanner(strings.NewReader(s))
+	var ln int
+	for scanner.Scan() {
+		ln++
+		if eln != ln {
+			fmt.Printf("%3d : %s\n", ln, scanner.Text())
+		} else {
+			fmt.Printf("%3d>: %s\n", ln, scanner.Text())
+			var ca string
+			for c := 0; c < ecn; c++ {
+				ca += " "
+			}
+			ca += "^"
+			fmt.Printf("    %s\n", ca)
+		}
+	}
 }
