@@ -11,7 +11,7 @@ This plugin has been created to improve upon the default procstat plugin that is
 
 ## Install
 
-You need a working go environment. See the golang install documentation. 
+You need a working go environment. See the golang install documentation: 
 https://golang.org/doc/install
  
 You need to clone the telegraf git repository:
@@ -60,6 +60,9 @@ A measurement has a name, a tag() and/or field() declaration and an input filter
 eg: `m1 = tag(cmd) field(cpu,rss) <- joe`  
 This measurement named m1 will emit cpu and rss field values tagged with the command name for all processes selected by the joe filter.  
 
+* Include:  
+You can include files in your script with `'include('file')`.  
+eg: `include('/etc/telegraf/subscript.inc')`
 
 
 ### Example script:
