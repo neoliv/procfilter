@@ -472,27 +472,39 @@ func (p *Parser) parseArgSep() error {
 
 // Preprocess a script (include, ...)
 func preprocess(s string) string {
-	var ns string
+	ns := s
 	var reinc = regexp.MustCompile(`^[[:space:]]*include[[:space:]]*[(][[:space:]]*["']([^"']*)["'][[:space:]]*[)][[:space:]]*(#.*)?$`)
-	scanner := bufio.NewScanner(strings.NewReader(s))
-	for scanner.Scan() {
-		l := scanner.Text()
-		m := reinc.FindStringSubmatch(l)
-		if m == nil {
-			// normal, non include line.
-			ns += l + "\n"
-		} else {
-			incf := m[1]
-			inc, err := ioutil.ReadFile(incf)
-			if err != nil {
-				ns += "# FAILED " + l + "\n"
-				continue
+	seen := map[string]interface{}{}
+	for found := true; found; {
+		s = ns
+		scanner := bufio.NewScanner(strings.NewReader(s))
+		ns = ""
+		found = false
+		for scanner.Scan() {
+			l := scanner.Text()
+			m := reinc.FindStringSubmatch(l)
+			if m == nil {
+				// normal, non include line.
+				ns += l + "\n"
+			} else {
+				incf := m[1]
+				if _, known := seen[incf]; known {
+					ns += "# FAILED already included: " + incf + "\n"
+					continue
+				}
+				seen[incf] = true
+				inc, err := ioutil.ReadFile(incf)
+				if err != nil {
+					ns += "# FAILED " + l + "\n"
+					continue
+				}
+				if (inc[len(inc)-1:])[0] != byte('\n') {
+					// Be sure to have a \n at then end of the included file.
+					inc = append(inc, byte('\n'))
+				}
+				found = true
+				ns += fmt.Sprintf("#BEGIN %s\n%s# END %s", incf, inc, incf)
 			}
-			if (inc[len(inc)-1:])[0] != byte('\n') {
-				// Be sure to have a \n at then end of the included file.
-				inc = append(inc, byte('\n'))
-			}
-			ns += fmt.Sprintf("#BEGIN %s\n%s# END %s", incf, inc, incf)
 		}
 	}
 	return ns

@@ -104,6 +104,11 @@ func (p *ProcFilter) init() {
 	}
 	// Init and parse the script to build the AST.
 	p.Script = preprocess(p.Script)
+	if p.Debug != 0 {
+		logWarning(fmt.Sprintf("Debug mode %d. May use more resources.", p.Debug))
+		Debug = p.Debug // Need a global to read it in obscure corners of the code.
+		displayScript(p.Script, -1, -1)
+	}
 	p.parser = NewParser(strings.NewReader(p.Script))
 	err := p.parser.Parse()
 	if err != nil {
@@ -133,11 +138,6 @@ func (p *ProcFilter) init() {
 			}
 		} else {
 			logWarning("Gathering data without Netlink and fast update. This is less accurate for short lived processes but it does not require root permissions and may use less resources.")
-		}
-		if p.Debug != 0 {
-			logWarning(fmt.Sprintf("Debug mode %d. May use more resources.", p.Debug))
-			Debug = p.Debug // Need a global to read it in obscure corners of the code.
-			displayScript(p.Script, -1, -1)
 		}
 	}
 }
