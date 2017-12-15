@@ -58,6 +58,8 @@ var sampleConfig = `
   # wakeup_interval = 100 # in ms
   ## Update age ratio indicates to the sampling goroutine when to update metrics for a process depending on its age. Young processes data get extra updates to collect relevant metrics before they vanish.
   # update_age_ratio = 0.5 # 0 => update all processes every time we wakeup (not recommended), 1.0 => update if the last update done is older than the age of the process. 
+  ## Debug flag (among other things, will output the script with line numbers).
+  # debug = 0 
   ## Describe what you want to measure by writting a script.
   ## (in an external file or embedded here.)
   # script_file = ""
