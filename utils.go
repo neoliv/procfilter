@@ -438,21 +438,24 @@ func findNextIndex(s []byte, start int, char byte) int {
 	return sl
 }
 
-func displayScript(s string, eln, ecn int) {
+// Build a string containing the script with line numbers and optional error markers.
+func debugScript(s string, eln, ecn int) string {
 	scanner := bufio.NewScanner(strings.NewReader(s))
+	var ds string
 	var ln int
 	for scanner.Scan() {
 		ln++
 		if eln != ln {
-			fmt.Printf("%3d : %s\n", ln, scanner.Text())
+			ds += fmt.Sprintf("%3d : %s\n", ln, scanner.Text())
 		} else {
-			fmt.Printf("%3d>: %s\n", ln, scanner.Text())
+			ds += fmt.Sprintf("%3d>: %s\n", ln, scanner.Text())
 			var ca string
 			for c := 0; c < ecn; c++ {
 				ca += " "
 			}
 			ca += "^"
-			fmt.Printf("    %s\n", ca)
+			ds += fmt.Sprintf("    %s\n", ca)
 		}
 	}
+	return ds
 }

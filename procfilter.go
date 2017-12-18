@@ -107,13 +107,12 @@ func (p *ProcFilter) init() {
 	if p.Debug != 0 {
 		logWarning(fmt.Sprintf("Debug mode %d. May use more resources.", p.Debug))
 		Debug = p.Debug // Need a global to read it in obscure corners of the code.
-		displayScript(p.Script, -1, -1)
+		logWarning(debugScript(p.Script, -1, -1))
 	}
 	p.parser = NewParser(strings.NewReader(p.Script))
 	err := p.parser.Parse()
 	if err != nil {
-		logErr(err.Error())
-		displayScript(p.Script, p.parser.eln, p.parser.ecn)
+		logErr(fmt.Sprintf("%s\n%s", err.Error(), debugScript(p.Script, p.parser.eln, p.parser.ecn)))
 		return
 	}
 	p.parseOK = true
