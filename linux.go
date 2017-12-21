@@ -365,7 +365,8 @@ func (ps *procStat) updateFromCmdline() error {
 		ps.dead(0)
 		return err
 	}
-	if len(s) == 0 {
+	sl := len(s)
+	if sl == 0 {
 		// kernel thread. Rework its name to make it easier to aggregate later.
 		ps.cmd = shortKernelCmd(ps.cmd)
 		trace("kernel thread pid=%d new cmd=%s", ps.pid, ps.cmd)
@@ -373,14 +374,14 @@ func (ps *procStat) updateFromCmdline() error {
 	} else {
 		// Fill the exe field before loosing the \0 marker.
 		ee := findNextIndex(s, 0, 0)
-		sl := len(s) - 1
 		for i := 0; i < sl; i++ {
 			if s[i] == 0 {
 				s[i] = ' ' // replace the \0 separating args by a plain whitespace. We do not use the fine arg by arg struct of argv[]
 			}
 		}
+		sl-- // The last char is a 0, skup its copy.
 		ps.cmdLine = string(s)
-		ps.exe = ps.cmdLine[0:ee] // TODO This assumes that we have one char per byte... fixhy if not utf8/ascii...
+		ps.exe = ps.cmdLine[0:ee] // TODO This assumes that we have one char per byte... fishy if not utf8/ascii...
 	}
 	return nil
 }

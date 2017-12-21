@@ -454,7 +454,7 @@ func debugScript(s string, eln, ecn int) string {
 				ca += " "
 			}
 			ca += "^"
-			ds += fmt.Sprintf("    %s\n", ca)
+			ds += fmt.Sprintf(">>>:%s\n", ca)
 		}
 	}
 	return ds
