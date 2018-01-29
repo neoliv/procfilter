@@ -87,13 +87,19 @@ func (p *packStat) CPU() (float32, error) {
 		c, _ := s.CPU()
 		cpu += float64(c)
 	}
-	if Debug != 0 && cpu > 90 {
-		l := len(p.elems)
-		fmt.Printf("-----------------------------------------------------------------\npackstat %f%% >90% (%d *stats):\n", cpu, l)
-		for i, s := range p.elems {
-			c, _ := s.CPU()
-			fmt.Printf("packstat >90% (%d/%d): %f %s\n", i, l, c, s.String())
+
+	// Quick fix until the >100% bug is found.
+	if cpu > 100 {
+		if Debug != 0 {
+			l := len(p.elems)
+			fmt.Printf("----------------------------------------------\n")
+			fmt.Printf("--packstat %f > 100 (%d *stats):\n", cpu, l)
+			for i, s := range p.elems {
+				c, _ := s.CPU()
+				fmt.Printf("-- packstat > 100 (%d/%d): %f %s\n", i, l, c, s.String())
+			}
 		}
+		cpu = 100
 	}
 	p.cpu = float32(cpu)
 	p.cpuTs = stamp

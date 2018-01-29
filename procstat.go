@@ -94,9 +94,9 @@ func (p *procStat) String() string {
 	}
 	cl := p.cmdLine[:l]
 	if !p.IsThread() {
-		return fmt.Sprintf("-- pid=%d ppid=%d state=%d cpu=%f%% rss=%d cmd=%s cl=%s", p.pid, p.ppid, p.status, p.cpupc, p.rss, p.cmd, cl)
+		return fmt.Sprintf("-- pid=%d ppid=%d state=%d cpu=%f rss=%d cmd=%s cl=%s", p.pid, p.ppid, p.status, p.cpupc, p.rss, p.cmd, cl)
 	} else { // thread
-		return fmt.Sprintf("----- pid=%d ppid=%d tgid=%d state=%d cpu=%f%% rss=%d cmd=%s cl=%s", p.pid, p.ppid, p.tgid, p.status, p.cpupc, p.rss, p.cmd, cl)
+		return fmt.Sprintf("----- pid=%d ppid=%d tgid=%d state=%d cpu=%f rss=%d cmd=%s cl=%s", p.pid, p.ppid, p.tgid, p.status, p.cpupc, p.rss, p.cmd, cl)
 	}
 }
 
@@ -139,13 +139,12 @@ func (p *procStat) CPU() (float32, error) {
 	p.updateFromStat() // Refresh process CPU counter.
 	// cpu is counted as jiffies that are CPU quantum of time allocated to the process.
 	var jiffies uint64
-	/*if p.cmd == "omv_bdc" {
-		fmt.Printf("dbg 1: ocpupc=%f pid=%d cmd=%s cpu=%d prevcpu=%d updt=%d pudt=%d start=%d ist=%d sd=%f\n", p.cpupc, p.pid, p.cmd, p.cpu, p.prevCpu, p.updTime, p.prevUpdTime, p.startTime, curProcFilter.prevSampleStart, curProcFilter.sampleDurationS)
-	}*/
 	if p.cpu != 0 {
 		if p.prevUpdTime != 0 {
 			// We have a complete sample. (usual case for long lived processes_
-			jiffies = p.cpu - p.prevCpu
+			if p.cpu > p.prevCpu { // protect against an unsigned int isue if there is an inversion in counters.
+				jiffies = p.cpu - p.prevCpu
+			}
 		} else if p.startTime > curProcFilter.prevSampleStart {
 			// First sample for this process.
 			// But the process started during this interval soe know that these jiffies belong to this sample.
@@ -178,11 +177,17 @@ func (p *procStat) CPU() (float32, error) {
 		}
 	}*/
 	cpupc := float32(100*jiffies) / (curProcFilter.sampleDurationS * JiffiesPerS)
-	if cpupc > 99 {
-		fmt.Printf(p.String())
+
+	// Quick fix until the >100% bug is found.
+	if cpupc > 100 {
+		if Debug != 0 {
+			fmt.Printf("-- procstat > 100: cpu=%f jiff=%d %s\n", cpupc, jiffies, p.String())
+		}
+		// On some [flush] thread we get an enormous cpu value.
+		// TODO debug!
+		cpupc = 0
 	}
 	p.prevUpdTime = p.updTime
-	//fmt.Printf("dbg: pid=%d cpupc=%f, jiff=%d\n", p.pid, cpupc, jiffies)
 	p.cpupc = cpupc
 	p.cpuTs = stamp
 	return cpupc, nil
