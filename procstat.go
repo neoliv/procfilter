@@ -225,7 +225,10 @@ func (p *procStat) IObps() (uint64, error) {
 		return 0, nil
 	}
 	dt := p.ioTime.Sub(p.prevIoTime).Seconds()
-	dio := p.io - p.prevIo
+	var dio uint64
+	if p.io > p.prevIo {
+		dio = p.io - p.prevIo
+	}
 	iobps := uint64(float64(dio) / dt)
 	return iobps, nil
 }
