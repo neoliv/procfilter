@@ -24,9 +24,8 @@ type Parser struct {
 	f2n          map[filter]string       // from a filter to its name
 	filters      []filter                // the order of declaration of all root filters (measurements or named filters)
 	measurements []*measurement
-	rewrites     []filter // special rewrite filters
-	eln          int      // last error line number
-	ecn          int      // lst error col number
+	eln          int // last error line number
+	ecn          int // lst error col number
 	buf          struct {
 		tok tokenType // last read token
 		lit string    // last read literal
@@ -116,16 +115,7 @@ func (p *Parser) Parse() error {
 		if tok != tTIdentifier {
 			return p.syntaxError(fmt.Sprintf("found %q, expecting identifier", name))
 		}
-		// rewrite(...)
-		if name == "rewrite" {
-			p.unscan()
-			f, err := p.parseFilter(name)
-			if err != nil {
-				return err
-			}
-			p.rewrites = append(p.rewrites, f)
-			continue
-		}
+
 		tok, lit := p.scanIgnoreWhitespace()
 		// Only two constructs in this micro language:
 		// ident <- filter
@@ -304,6 +294,30 @@ func (p *Parser) parseIdentifierList() ([]string, error) {
 			return il, nil
 		}
 	}
+}
+
+// parseStregexoList parse a list of stregexps
+// eg: 'a','b'r,"c") note the last ) that will be cosummed
+func (p *Parser) parseArgStregexpList(pa *[]*stregexp) error {
+	var sr *stregexp
+	var err error
+	*pa = nil
+	var a []*stregexp
+	for {
+		err = p.parseArgStregexp(&sr)
+		if err != nil {
+			break
+		}
+		a = append(a, sr)
+		tok, _ := p.scanIgnoreWhitespace()
+		p.unscan()
+		if tok == tTRightPar {
+			*pa = a
+			return nil
+		}
+	}
+	*pa = a
+	return err
 }
 
 // parseSymbol parse the desired symbol

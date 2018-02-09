@@ -32,9 +32,10 @@ type packStat struct {
 	elems []*procStat
 	other string // Special "other" case
 	// pack criteria values
-	uid int32
-	gid int32
-	cmd string
+	uid  int32
+	gid  int32
+	cmd  string
+	user string
 	// aggregated values
 	procNbTs   tStamp
 	procNb     uint64
@@ -88,7 +89,7 @@ func (p *packStat) CPU() (float32, error) {
 		cpu += float64(c)
 	}
 
-	// Quick fix until the >100% bug is found.
+	// Sanity check.
 	if cpu > 100 {
 		if Debug != 0 {
 			l := len(p.elems)
@@ -168,6 +169,9 @@ func (p *packStat) Group() (string, error) {
 func (p *packStat) User() (string, error) {
 	if p.other != "" {
 		return p.other, nil
+	}
+	if p.user != "" {
+		return p.user, nil
 	}
 	if p.uid < 0 {
 		return "[unknown]", nil

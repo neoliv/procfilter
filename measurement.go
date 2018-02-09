@@ -227,11 +227,11 @@ func (m *measurement) push(p *ProcFilter, acc telegraf.Accumulator) {
 	defer apsMutex.Unlock()
 	iStats := m.f.Stats()
 	for _, ps := range iStats.pid2Stat {
-		pn := ps.ProcessNumber()
-		if pn <= 0 {
-			// This stat contains 0 processes => do not output, this way we save network and DB space.
-			continue
-		}
+		//pn := ps.ProcessNumber()
+		// Hard to process properly the null data points in inflix. So we emit the useless 0 anyway. if pn <= 0 {
+		// This stat contains 0 processes => do not output, this way we save network and DB space.
+		//	continue
+		//}
 		tags, err := m.getTags(ps, p.Tag_prefix)
 		if err != nil {
 			logErr(err.Error())
@@ -243,7 +243,7 @@ func (m *measurement) push(p *ProcFilter, acc telegraf.Accumulator) {
 			continue
 		}
 
-		// Subtitute part of the measuremetn name by a tag. Usualy a generated variable. (see revar filter)
+		// Substitute part of the measurement name by a tag. Usualy a generated variable. (see revar filter)
 		// wl.oracle.${instance} -> wl.oracle.mine
 		var nc string
 		if mis == nil {

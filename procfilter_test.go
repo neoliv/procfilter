@@ -16,11 +16,13 @@ import (
 	"time"
 
 	"github.com/shirou/gopsutil/process"
-
 	//"encoding/json"
 )
 
 var testScripts = []string{
+	`pbu <- packby(user, 'oliv', 'root', all)
+     pbu = tag(user) fields(process_nb) <- pbu
+`,
 	`bycmd <- packby(cmd)
 	 top.cmd.cpu = tag(cmd) field(cpu,rss,vsz,swap) <- top(cpu,3,bycmd)
 	 top.cmd.rss = tag(cmd) field(cpu,rss,vsz,swap) <- top(rss,3,bycmd)

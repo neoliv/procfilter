@@ -101,6 +101,22 @@ type stregexp struct {
 	re     *regexp.Regexp // the compiled version of the user string
 }
 
+func (s *stregexp) String() string {
+	if s.isRe {
+		if s.invert {
+			return fmt.Sprintf("not_re_%s", s.pat)
+		} else {
+			return fmt.Sprintf("re_%s", s.pat)
+		}
+	} else {
+		if s.invert {
+			return fmt.Sprintf("not_%s", s.pat)
+		} else {
+			return fmt.Sprintf("%s", s.pat)
+		}
+	}
+}
+
 func NewStregexp(pat string, isRe bool, invert bool) (*stregexp, error) {
 	var sr stregexp
 

@@ -38,7 +38,7 @@ type filter interface {
 
 // name2FuncFilter use a name to return an object of the proper concrete type matchingt the filter interface.
 func name2FuncFilter(funcName string) filter {
-	// sorry, tried to do that with reflct but did not manage to make it work
+	// sorry, tried to do that with reflect but did not manage to make it work.
 	fn := strings.ToLower(funcName)
 	var f filter
 	switch fn {
@@ -1274,8 +1274,18 @@ func (f *unpackFilter) Stats() *stats {
 // Pack processes using a group criteria. eg packby(user) will create one packStat per user that will contain all processes for this user.
 type packByFilter struct {
 	stats
-	inputs []filter
-	by     string // criteria to pack by
+	inputs   []filter
+	by       string      // criteria to pack by
+	byconsts []*stregexp // optional, constant set of values
+}
+
+func (f *packByFilter) String() string {
+	s := fmt.Sprintf("packby: %s, ", f.by)
+	for _, c := range f.byconsts {
+		s += fmt.Sprintf("%v,", c)
+	}
+	s += fmt.Sprintf("%v)", f.inputs)
+	return s
 }
 
 func (f *packByFilter) Apply() error {
@@ -1284,77 +1294,96 @@ func (f *packByFilter) Apply() error {
 	}
 	applyAll(f.inputs)
 	pss := unpackFiltersAsSlice(f.inputs, nil)
-	switch f.by {
-	case "user":
-		mby := map[int32]*packStat{}
-		for _, ps := range pss {
-			v, err := ps.UID()
-			if err != nil {
-				continue
-			}
-			if packStat, known := mby[v]; known {
-				// Already have a packStat for this user. Append to it.
-				packStat.elems = append(packStat.elems, ps)
-			} else {
-				// New value, create a new packStat for all procStats with that value.
-				packStat = NewPackStat([]*procStat{ps})
-				packStat.uid = v
-				mby[v] = packStat
-				f.pid2Stat[packStat.pid] = stat(packStat)
-			}
-		}
-	case "group":
-		mby := map[int32]*packStat{}
-		for _, ps := range pss {
-			v, err := ps.GID()
-			if err != nil {
-				continue
-			}
-			if packStat, known := mby[v]; known {
-				// Already have a packStat for this user. Append to it.
-				packStat.elems = append(packStat.elems, ps)
-			} else {
-				// New value, create a new packStat for all procStats with that value.
-				packStat = NewPackStat([]*procStat{ps})
-				packStat.gid = v
-				mby[v] = packStat
-				f.pid2Stat[packStat.pid] = stat(packStat)
-			}
-		}
-	case "cmd":
-		mby := map[string]*packStat{}
-		for _, ps := range pss {
-			v := ps.cmd
-			if packStat, known := mby[v]; known {
-				// Already have a packStat for this user. Append to it.
-				packStat.elems = append(packStat.elems, ps)
-			} else {
-				// New value, create a new packStat for all procStats with that value.
-				packStat = NewPackStat([]*procStat{ps})
-				packStat.cmd = v
-				mby[v] = packStat
-				f.pid2Stat[packStat.pid] = stat(packStat)
-			}
-		}
-	default: // This is probably a variable name used to store synthetic data.
-		mby := map[string]*packStat{}
-		for _, ps := range pss {
-			v, exist := ps.vars[f.by]
-			if !exist || v == "" {
-				v = "(NA)" // Process where the variable does not exist or is empty are packed together with a value of '(NA)'
-			}
-			if packStat, known := mby[v]; known {
-				// Already have a packStat for this user. Append to it.
-				packStat.elems = append(packStat.elems, ps)
-			} else {
-				// New value, create a new packStat for all procStats with that value.
-				packStat = NewPackStat([]*procStat{ps})
-				if packStat.vars == nil {
-					packStat.vars = map[string]string{}
+	if len(f.byconsts) != 0 {
+		// Categories to pack by are already knonw, this is a set of constant string/regexps.
+		switch f.by {
+		case "user":
+			for _, c := range f.byconsts {
+				packStat := NewPackStat([]*procStat{})
+				packStat.user = c.String()
+				for _, ps := range pss {
+					user, _ := ps.User()
+					if c.matchString(user) {
+						packStat.elems = append(packStat.elems, ps)
+					}
 				}
-				packStat.vars[f.by] = v
-				mby[v] = packStat
 				f.pid2Stat[packStat.pid] = stat(packStat)
+			}
+		}
+	} else {
+		// We will find the set of values found for the criteria and pack accordingly.
+		switch f.by {
+		case "user":
+			mby := map[int32]*packStat{}
+			for _, ps := range pss {
+				v, err := ps.UID()
+				if err != nil {
+					continue
+				}
+				if packStat, known := mby[v]; known {
+					// Already have a packStat for this user. Append to it.
+					packStat.elems = append(packStat.elems, ps)
+				} else {
+					// New value, create a new packStat for all procStats with that value.
+					packStat = NewPackStat([]*procStat{ps})
+					packStat.uid = v
+					mby[v] = packStat
+					f.pid2Stat[packStat.pid] = stat(packStat)
+				}
+			}
+		case "group":
+			mby := map[int32]*packStat{}
+			for _, ps := range pss {
+				v, err := ps.GID()
+				if err != nil {
+					continue
+				}
+				if packStat, known := mby[v]; known {
+					// Already have a packStat for this user. Append to it.
+					packStat.elems = append(packStat.elems, ps)
+				} else {
+					// New value, create a new packStat for all procStats with that value.
+					packStat = NewPackStat([]*procStat{ps})
+					packStat.gid = v
+					mby[v] = packStat
+					f.pid2Stat[packStat.pid] = stat(packStat)
+				}
+			}
+		case "cmd":
+			mby := map[string]*packStat{}
+			for _, ps := range pss {
+				v := ps.cmd
+				if packStat, known := mby[v]; known {
+					// Already have a packStat for this user. Append to it.
+					packStat.elems = append(packStat.elems, ps)
+				} else {
+					// New value, create a new packStat for all procStats with that value.
+					packStat = NewPackStat([]*procStat{ps})
+					packStat.cmd = v
+					mby[v] = packStat
+					f.pid2Stat[packStat.pid] = stat(packStat)
+				}
+			}
+		default: // This is probably a variable name used to store synthetic data.
+			mby := map[string]*packStat{}
+			for _, ps := range pss {
+				v, exist := ps.vars[f.by]
+				if !exist || v == "" {
+					v = "(NA)" // Process where the variable does not exist or is empty are packed together with a value of '(NA)'
+				}
+				if packStat, known := mby[v]; known {
+					// Already have a packStat for this user. Append to it.
+					packStat.elems = append(packStat.elems, ps)
+				} else {
+					// New value, create a new packStat for all procStats with that value.
+					packStat = NewPackStat([]*procStat{ps})
+					if packStat.vars == nil {
+						packStat.vars = map[string]string{}
+					}
+					packStat.vars[f.by] = v
+					mby[v] = packStat
+					f.pid2Stat[packStat.pid] = stat(packStat)
+				}
 			}
 		}
 	}
@@ -1363,10 +1392,14 @@ func (f *packByFilter) Apply() error {
 
 func (f *packByFilter) Parse(p *Parser) error {
 	// eg: [packby(]user,f1,f2,f3)
+	// eg: [packby(]user, 'joe','foo',f1,f2,f3)
 	err := p.parseArgIdentifier(&f.by)
 	if err != nil {
 		return err
 	}
+	// try to parse an optional list of stregexps
+	err = p.parseArgStregexpList(&f.byconsts)
+	// then parse the list of filters
 	err = p.parseArgFilterList(&f.inputs, 0)
 	if err != nil {
 		return err

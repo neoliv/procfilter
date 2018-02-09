@@ -36,10 +36,11 @@ inputs/processus
 inputs/procfilter
 inputs/swap
 inputs/system
-inputs/postgresql
-inputs/postgresql_extensible
+outputs/file
 outputs/influxdb
 '
+#inputs/postgresql
+#inputs/postgresql_extensible
 
 # These plugins will be disabled if using -b
 Plugins_black_list='
