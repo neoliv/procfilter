@@ -7,6 +7,7 @@ package procfilter
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"time"
 )
@@ -358,7 +359,8 @@ func (ps *procStat) updateFromCmdline() error {
 		ps.cmdLine = shortLivedString
 		return nil
 	}
-	s, err := fastRead(procFileName(ps.pid, "cmdline"))
+	// TODO use a static buffer to avoid gc?
+	s, err := ioutil.ReadFile(procFileName(ps.pid, "cmdline"))
 	trace("cmdline: %d '%s'", len(s), s)
 	if err != nil {
 		ps.cmdLine = shortLivedString

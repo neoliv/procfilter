@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
 	//	"github.com/shirou/gopsutil/process"
 )
 
@@ -141,12 +142,12 @@ func (p *procStat) CPU() (float32, error) {
 	if p.cpu != 0 {
 		if p.prevUpdTime != 0 {
 			// We have a complete sample. (usual case for long lived processes_
-			if p.cpu > p.prevCpu { // protect against an unsigned int issue if there is an inversion in counters.
+			if p.cpu > p.prevCpu { // protect against an unsigned int isue if there is an inversion in counters.
 				jiffies = p.cpu - p.prevCpu
 			}
 		} else if p.startTime > curProcFilter.prevSampleStart {
 			// First sample for this process.
-			// But the process started during this interval so we know that these jiffies belong to this sample.
+			// But the process started during this interval soe know that these jiffies belong to this sample.
 			jiffies = p.cpu
 		} /*else {
 			// We don't know enough to assign these jiffies.
@@ -171,17 +172,19 @@ func (p *procStat) CPU() (float32, error) {
 				} // else 0 jiffies, TODO try a guess?
 			} else {
 				// Dead during first sample so we assign one jiffy but this is a very rough guesstimate.
-				jiffies = 1
+				jiffies = 0 // = 1 TODO debug
 			}
 		}
 	}*/
 	cpupc := float32(100*jiffies) / (curProcFilter.sampleDurationS * JiffiesPerS)
 
-	// Sanity check.
+	// Quick fix until the >100% bug is found.
 	if cpupc > 100 {
 		if Debug != 0 {
 			fmt.Printf("-- procstat > 100: cpu=%f jiff=%d %s\n", cpupc, jiffies, p.String())
 		}
+		// On some [flush] thread we get an enormous cpu value.
+		// TODO debug!
 		cpupc = 0
 	}
 	p.prevUpdTime = p.updTime

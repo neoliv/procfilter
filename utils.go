@@ -104,15 +104,15 @@ type stregexp struct {
 func (s *stregexp) String() string {
 	if s.isRe {
 		if s.invert {
-			return fmt.Sprintf("not_re_%s", s.pat)
+			return fmt.Sprintf("!'%s'r", s.pat)
 		} else {
-			return fmt.Sprintf("re_%s", s.pat)
+			return fmt.Sprintf("'%s'r", s.pat)
 		}
 	} else {
 		if s.invert {
-			return fmt.Sprintf("not_%s", s.pat)
+			return fmt.Sprintf("!'%s'", s.pat)
 		} else {
-			return fmt.Sprintf("%s", s.pat)
+			return fmt.Sprintf("'%s'", s.pat)
 		}
 	}
 }

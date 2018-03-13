@@ -38,7 +38,7 @@ type filter interface {
 
 // name2FuncFilter use a name to return an object of the proper concrete type matchingt the filter interface.
 func name2FuncFilter(funcName string) filter {
-	// sorry, tried to do that with reflect but did not manage to make it work.
+	// sorry, tried to do that with reflct but did not manage to make it work
 	fn := strings.ToLower(funcName)
 	var f filter
 	switch fn {
@@ -1280,11 +1280,10 @@ type packByFilter struct {
 }
 
 func (f *packByFilter) String() string {
-	s := fmt.Sprintf("packby: %s, ", f.by)
+	s := fmt.Sprintf("packby: %s, (%v)", f.by, f.byconsts)
 	for _, c := range f.byconsts {
 		s += fmt.Sprintf("%v,", c)
 	}
-	s += fmt.Sprintf("%v)", f.inputs)
 	return s
 }
 
@@ -1296,20 +1295,6 @@ func (f *packByFilter) Apply() error {
 	pss := unpackFiltersAsSlice(f.inputs, nil)
 	if len(f.byconsts) != 0 {
 		// Categories to pack by are already knonw, this is a set of constant string/regexps.
-		switch f.by {
-		case "user":
-			for _, c := range f.byconsts {
-				packStat := NewPackStat([]*procStat{})
-				packStat.user = c.String()
-				for _, ps := range pss {
-					user, _ := ps.User()
-					if c.matchString(user) {
-						packStat.elems = append(packStat.elems, ps)
-					}
-				}
-				f.pid2Stat[packStat.pid] = stat(packStat)
-			}
-		}
 	} else {
 		// We will find the set of values found for the criteria and pack accordingly.
 		switch f.by {
@@ -1401,6 +1386,7 @@ func (f *packByFilter) Parse(p *Parser) error {
 	err = p.parseArgStregexpList(&f.byconsts)
 	// then parse the list of filters
 	err = p.parseArgFilterList(&f.inputs, 0)
+	fmt.Printf("-- %v\n", f)
 	if err != nil {
 		return err
 	}
