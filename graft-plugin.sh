@@ -5,13 +5,13 @@
 # 
 
 Telegraf_src=$GOPATH/src/github.com/influxdata/telegraf
-Plugin_import_inputs=$Telegraf_src/plugins/inputs/all/all.go
-Plugin_import_outputs=$Telegraf_src/plugins/outputs/all/all.go
-Plugin_imports="$Plugin_import_inputs $Plugin_import_outputs"
-Conf_backup=/tmp/graft-plugin.all.go.orig
-Tmp=/tmp/graft-plugin.tmp
-Log=/tmp/graft-plugin.log
-cat /dev/null > $Log
+Plugin_imports=$(find $Telegraf_src/plugins/ -name all.go)
+Plugin_import_inputs=$(echo "$Plugin_imports" | grep inputs)
+
+Tmp=/tmp/graft-plugin-$USER.tmp
+Log=/tmp/graft-plugin-$USER.log
+cat /dev/null > $Log $Tmp
+chmod a+rw $Log $Tmp
 
 # Import procfilter plugin (not in the standard distribution)
 Import_procfilter='	_ "github.com/influxdata/telegraf/plugins/inputs/procfilter" // New plugin.'
@@ -113,13 +113,18 @@ function parse_opts(){
 }
 
 function save(){
-    cp $Plugin_import_inputs "${Conf_backup}.inputs"
-    cp $Plugin_import_outputs "${Conf_backup}.outputs"
+    for i in $Plugin_imports; do
+	if [[ ! -e $i.orig ]]; then
+	    cp $i $i.orig # keep the original file before any change
+	fi
+	cp $i $i.save # keep the current file
+    done
 }
 
 function restore(){
-    cp "${Conf_backup}.inputs" $Plugin_import_inputs
-    cp "${Conf_backup}.outputs" $Plugin_import_outputs 
+    for i in $Plugin_imports; do
+	cp $i.orig $i
+    done
 }
 
 # Comment the import line corresponding to a plugin.
@@ -127,8 +132,9 @@ function restore(){
 # eg: disable_plugin "inputs/powerdns"
 function disable_plugin(){
     p="$1"
-    sed -r -i 's|^([^/]*)(github.com/influxdata/telegraf/plugins/'$p')(["].*)|//\1\2\3 // disabled by graft-plugin.sh|' $Plugin_imports
-    #grep $p $Plugin_imports
+    for i in $Plugin_imports; do
+	sed -r -i 's|^([^/]*)(github.com/influxdata/telegraf/plugins/'$p')(["].*)|//\1\2\3 // disabled by graft-plugin.sh|' $i
+    done
 }
 
 function exec_size(){
