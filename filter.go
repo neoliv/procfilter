@@ -1383,10 +1383,9 @@ func (f *packByFilter) Parse(p *Parser) error {
 		return err
 	}
 	// try to parse an optional list of stregexps
-	err = p.parseArgStregexpList(&f.byconsts)
+	//err = p.parseArgStregexpList(&f.byconsts)
 	// then parse the list of filters
 	err = p.parseArgFilterList(&f.inputs, 0)
-	fmt.Printf("-- %v\n", f)
 	if err != nil {
 		return err
 	}
