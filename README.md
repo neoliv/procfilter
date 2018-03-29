@@ -22,7 +22,7 @@ go get github.com/influxdata/telegraf
 Create a clone of the procfilter plugin inside the telegraf source tree (and run the script graft-plugin.sh to fix the relevant telegraf files):  
 ```
 cd $GOPATH/src/github.com/influxdata/telegraf/plugins/inputs/
-git clone github.con/neoliv/procfilter
+git clone https://github.com/neoliv/procfilter
 cd procfilter
 ./graft-plugin.sh
 ```
