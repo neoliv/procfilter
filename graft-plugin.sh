@@ -10,7 +10,8 @@ Plugin_import_inputs=$(echo "$Plugin_imports" | grep inputs)
 
 Tmp=/tmp/graft-plugin-$USER.tmp
 Log=/tmp/graft-plugin-$USER.log
-cat /dev/null > $Log $Tmp
+cat /dev/null > $Log
+cat /dev/null > $Tmp
 chmod a+rw $Log $Tmp
 
 # Import procfilter plugin (not in the standard distribution)
