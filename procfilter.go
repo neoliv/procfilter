@@ -136,7 +136,8 @@ func (p *ProcFilter) init() {
 				logWarning("Gathering data without Netlink and fast update. This is less accurate for short lived processes. Remember that you need root permissions for Netlink mode.")
 			}
 		} else {
-			logWarning("Gathering data without Netlink and fast update. This is less accurate for short lived processes but it does not require root permissions and may use less resources.")
+			// TODO: reactivate message when netlink is more useful. logWarning("Gathering data without Netlink and fast update. This is less accurate for short lived processes but it does not require root permissions and may use less resources.")
+			logWarning("Gathering data without Netlink.")
 		}
 	}
 }

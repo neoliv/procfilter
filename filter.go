@@ -1274,16 +1274,12 @@ func (f *unpackFilter) Stats() *stats {
 // Pack processes using a group criteria. eg packby(user) will create one packStat per user that will contain all processes for this user.
 type packByFilter struct {
 	stats
-	inputs   []filter
-	by       string      // criteria to pack by
-	byconsts []*stregexp // optional, constant set of values
+	inputs []filter
+	by     []string // all criteria to pack by
 }
 
 func (f *packByFilter) String() string {
-	s := fmt.Sprintf("packby: %s, (%v)", f.by, f.byconsts)
-	for _, c := range f.byconsts {
-		s += fmt.Sprintf("%v,", c)
-	}
+	s := fmt.Sprintf("packby: %s", f.by)
 	return s
 }
 
@@ -1293,98 +1289,48 @@ func (f *packByFilter) Apply() error {
 	}
 	applyAll(f.inputs)
 	pss := unpackFiltersAsSlice(f.inputs, nil)
-	if len(f.byconsts) != 0 {
-		// Categories to pack by are already knonw, this is a set of constant string/regexps.
-	} else {
-		// We will find the set of values found for the criteria and pack accordingly.
-		switch f.by {
-		case "user":
-			mby := map[int32]*packStat{}
-			for _, ps := range pss {
-				v, err := ps.UID()
-				if err != nil {
-					continue
-				}
-				if packStat, known := mby[v]; known {
-					// Already have a packStat for this user. Append to it.
-					packStat.elems = append(packStat.elems, ps)
-				} else {
-					// New value, create a new packStat for all procStats with that value.
-					packStat = NewPackStat([]*procStat{ps})
-					packStat.uid = v
-					mby[v] = packStat
-					f.pid2Stat[packStat.pid] = stat(packStat)
-				}
-			}
-		case "group":
-			mby := map[int32]*packStat{}
-			for _, ps := range pss {
-				v, err := ps.GID()
-				if err != nil {
-					continue
-				}
-				if packStat, known := mby[v]; known {
-					// Already have a packStat for this user. Append to it.
-					packStat.elems = append(packStat.elems, ps)
-				} else {
-					// New value, create a new packStat for all procStats with that value.
-					packStat = NewPackStat([]*procStat{ps})
-					packStat.gid = v
-					mby[v] = packStat
-					f.pid2Stat[packStat.pid] = stat(packStat)
-				}
-			}
-		case "cmd":
-			mby := map[string]*packStat{}
-			for _, ps := range pss {
-				v := ps.cmd
-				if packStat, known := mby[v]; known {
-					// Already have a packStat for this user. Append to it.
-					packStat.elems = append(packStat.elems, ps)
-				} else {
-					// New value, create a new packStat for all procStats with that value.
-					packStat = NewPackStat([]*procStat{ps})
-					packStat.cmd = v
-					mby[v] = packStat
-					f.pid2Stat[packStat.pid] = stat(packStat)
-				}
-			}
-		default: // This is probably a variable name used to store synthetic data.
-			mby := map[string]*packStat{}
-			for _, ps := range pss {
-				v, exist := ps.vars[f.by]
-				if !exist || v == "" {
-					v = "(NA)" // Process where the variable does not exist or is empty are packed together with a value of '(NA)'
-				}
-				if packStat, known := mby[v]; known {
-					// Already have a packStat for this user. Append to it.
-					packStat.elems = append(packStat.elems, ps)
-				} else {
-					// New value, create a new packStat for all procStats with that value.
-					packStat = NewPackStat([]*procStat{ps})
-					if packStat.vars == nil {
-						packStat.vars = map[string]string{}
-					}
-					packStat.vars[f.by] = v
-					mby[v] = packStat
-					f.pid2Stat[packStat.pid] = stat(packStat)
-				}
+	p := NewPackStat(pss)
+	split := []*packStat{p}
+	for _, by := range f.by {
+		subsplit := []*packStat{}
+		for _, p := range split {
+			ss := p.packBy(by)
+			for _, sp := range ss {
+				subsplit = append(subsplit, sp)
 			}
 		}
+		split = subsplit
+	}
+	// We now have an array of packstats (one per unique tuple of by criteria values)
+	for _, p := range split {
+		f.pid2Stat[p.pid] = stat(p)
 	}
 	return nil
 }
 
 func (f *packByFilter) Parse(p *Parser) error {
 	// eg: [packby(]user,f1,f2,f3)
-	// eg: [packby(]user, 'joe','foo',f1,f2,f3)
-	err := p.parseArgIdentifier(&f.by)
+	// eg: [packby(](user,cmd),f1,f2,f3)
+	err := p.parseSymbol('(')
+	if err == nil {
+		// multi criteria packby (eg: (user, cmd)
+		// the ) is consummed
+		f.by, err = p.parseIdentifierList()
+		if err == nil {
+			err = p.parseSymbol(',')
+		}
+	} else {
+		// single criteria packby (eg: user)
+		by := make([]string, 1)
+		err = p.parseArgIdentifier(&by[0])
+		if err == nil {
+			f.by = by
+		}
+	}
 	if err != nil {
 		return err
 	}
-	// try to parse an optional list of stregexps
-	//err = p.parseArgStregexpList(&f.byconsts)
-	// then parse the list of filters
+	// Then parse the list of filters
 	err = p.parseArgFilterList(&f.inputs, 0)
 	if err != nil {
 		return err

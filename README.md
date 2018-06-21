@@ -236,13 +236,17 @@ If {input} contains aggregated processes, unpack them as individual processes.
 
 * Packby, by  
 packby(criteria,i1[,i2,...])  
+packby((c1[,c2,c3,...]),i1[,i2,...])  
 Pack processes according to {criteria} values (similar to a SQL group by).  
-The subset of criteria available for groupby is: user,group,cmd  
+If you specify more than one criteria the group is multo-criteria (ie: you' ll get one group of process for every unique tuple of criteria values found).  
+The subset of criteria available for groupby is: user,group,cmd and synthetic user variables.
 eg: `packby(user)`  
 Build aggregates of processes by owner (user).  
+eg: `packby(user,cmd)`  
+Build aggregates of processes with the same user and command.  
 
 
-## User defined fields
+## User defined fields/variables
 
 If you need to pack processes using a criteria that is not available you can synthetize your own.
 revar(criteria,'matching re','replacment re','new field name', input)
@@ -333,6 +337,7 @@ cmd
 exe
 path
 pid
++ any user defined synthetic field.
 
 Note that pid could be considered harmful for your influxdb performance until the cardinality issues are less problematic. (as of influxDB 1.4 the tsi1 engine is still an work in progress). 
 
@@ -368,6 +373,7 @@ process\_nb
 fd\_nb
 io
 iobps
++ any user defined synthetic field.
 
 ## More examples
 

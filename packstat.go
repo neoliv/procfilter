@@ -17,6 +17,9 @@ func resetAllPackStats() {
 }
 
 func NewPackStat(es []*procStat) *packStat {
+	if packStatId <= -2147483647 { // min int32 +1
+		packStatId = 0 // reuse the range. Assuming no old pacstat are still alive.
+	}
 	packStatId--
 	s := packStat{pid: packStatId, elems: es}
 	s.uid = -1 // flag as not initialized
@@ -28,7 +31,7 @@ func NewPackStat(es []*procStat) *packStat {
 This is used to gather a single value for a set of processes. Eg: The total RSS used by all tomcat processes
 */
 type packStat struct {
-	pid   tPid
+	pid   tPid // A fake uniq (negative) PID.
 	elems []*procStat
 	other string // Special "other" case
 	// pack criteria values
@@ -294,10 +297,121 @@ func (p *packStat) Var(name string) string {
 	if known {
 		return val
 	} else {
-		return ""
+		// If a name is not defined on a packstat we can try to find it in one of its sub stats.
+		// This is a cheap and a bit cheaty way to get kind of a aggregation of sub-vars.
+		// The right way would be to check if all substats have the same value and return it only in this case.
+		// But if the user is trying to get to a sub value. He probably knows that this value is relevant (ie: the same for all stats).
+		// So return the first non "" var from substats.
+		for _, s := range p.elems {
+			v := s.Var(name)
+			if v != "" {
+				return v
+			}
+		}
+		return p.elems[0].Var(name)
 	}
 }
 
 func (p *packStat) PVars() *(map[string]string) {
 	return &p.vars
+}
+
+// packStat Copy all p values to 'to' (all values used as criteria for pakBy and similar).
+func (p *packStat) copyByValues(to *packStat) {
+	to.uid = p.uid
+	to.gid = p.gid
+	to.cmd = p.cmd
+	if p.vars != nil {
+		vars := map[string]string{}
+		for k, v := range p.vars {
+			vars[k] = v
+		}
+		to.vars = vars
+	}
+}
+
+// packby will split stats in input packstat according to a criteria.
+func (p *packStat) packBy(by string) []*packStat {
+	split := []*packStat{}
+	pss := p.elems
+	// We will discover the set of values for the by criteria and pack accordingly.
+	switch by {
+	case "user":
+		mby := map[int32]*packStat{}
+		for _, ps := range pss {
+			v, err := ps.UID()
+			if err != nil {
+				continue
+			}
+			if packStat, known := mby[v]; known {
+				// Already have a packStat for this user. Append to it.
+				packStat.elems = append(packStat.elems, ps)
+			} else {
+				// New value, create a new packStat for all procStats with that value.
+				packStat = NewPackStat([]*procStat{ps})
+				p.copyByValues(packStat)
+				split = append(split, packStat)
+				packStat.uid = v
+				mby[v] = packStat
+			}
+		}
+	case "group":
+		mby := map[int32]*packStat{}
+		for _, ps := range pss {
+			v, err := ps.GID()
+			if err != nil {
+				continue
+			}
+			if packStat, known := mby[v]; known {
+				// Already have a packStat for this user. Append to it.
+				packStat.elems = append(packStat.elems, ps)
+			} else {
+				// New value, create a new packStat for all procStats with that value.
+				packStat = NewPackStat([]*procStat{ps})
+				p.copyByValues(packStat)
+				split = append(split, packStat)
+				packStat.gid = v
+				mby[v] = packStat
+			}
+		}
+	case "cmd":
+		mby := map[string]*packStat{}
+		for _, ps := range pss {
+			v := ps.cmd
+			if packStat, known := mby[v]; known {
+				// Already have a packStat for this user. Append to it.
+				packStat.elems = append(packStat.elems, ps)
+			} else {
+				// New value, create a new packStat for all procStats with that value.
+				packStat = NewPackStat([]*procStat{ps})
+				p.copyByValues(packStat)
+				split = append(split, packStat)
+				packStat.cmd = v
+				mby[v] = packStat
+			}
+		}
+	default: // This is probably a variable name used to store synthetic data.
+		mby := map[string]*packStat{}
+		for _, ps := range pss {
+			v, exist := ps.vars[by]
+			if !exist || v == "" {
+				v = "(NA)" // Process where the variable does not exist or is empty are packed together with a value of '(NA)'
+			}
+			if packStat, known := mby[v]; known {
+				// Already have a packStat for this user. Append to it.
+				packStat.elems = append(packStat.elems, ps)
+			} else {
+				// New value, create a new packStat for all procStats with that value.
+				packStat = NewPackStat([]*procStat{ps})
+				p.copyByValues(packStat)
+				split = append(split, packStat)
+				if packStat.vars == nil {
+					packStat.vars = map[string]string{}
+				}
+				packStat.vars[by] = v
+				mby[v] = packStat
+			}
+		}
+	}
+	return split
 }

@@ -184,7 +184,6 @@ func (p *procStat) CPU() (float32, error) {
 			fmt.Printf("-- procstat > 100: cpu=%f jiff=%d %s\n", cpupc, jiffies, p.String())
 		}
 		// On some [flush] thread we get an enormous cpu value.
-		// TODO debug!
 		cpupc = 0
 	}
 	p.prevUpdTime = p.updTime
