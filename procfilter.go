@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	// "github.com/pkg/profile" // Debug/profile
+
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/plugins/inputs"
 )
@@ -81,7 +83,15 @@ func (_ *ProcFilter) Description() string {
 	return "Monitor process cpu and memory usage with filters and aggregation"
 }
 
+func sprofile(s int) {
+	fmt.Printf("*** Profile start. ******************\n")
+	//defer profile.Start().Stop()
+	time.Sleep(time.Duration(s) * 1000 * time.Millisecond)
+	fmt.Printf("*** Profile done. ******************\n")
+}
+
 func init() {
+	// go sprofile(90) // debug only
 	inputs.Add("procfilter", func() telegraf.Input {
 		return NewProcFilter()
 	})

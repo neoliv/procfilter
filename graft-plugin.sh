@@ -39,6 +39,8 @@ inputs/swap
 inputs/system
 outputs/file
 outputs/influxdb
+inputs/postgresql
+inputs/postgresql_extensible
 '
 #inputs/postgresql
 #inputs/postgresql_extensible

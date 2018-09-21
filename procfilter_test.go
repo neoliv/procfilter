@@ -3,6 +3,7 @@ package procfilter
 
 // DEBUG/OPTIM
 /*import (
+	"os"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -11,6 +12,7 @@ package procfilter
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -140,6 +142,63 @@ func BenchmarkFastStat(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		ps.updateFromStat()
 	}
+}
+
+func BenchmarkFastReadLine(b *testing.B) {
+	t := 0
+	for {
+		d, err := os.Open("/proc/")
+		if err != nil {
+			return
+		}
+		defer d.Close()
+		fnames, err := d.Readdirnames(-1)
+		if err != nil {
+			return
+		}
+		for _, fname := range fnames {
+			if (fname[0] < '0') || (fname[0] > '9') {
+				// Skip the conversion attempt if we know beforehand this is not a PID.
+				continue
+			}
+			// Probably a PID.
+			if t >= b.N {
+				return
+			}
+			t++
+			err := fastReadOpen(fmt.Sprintf("/proc/%s/smaps", fname))
+			if err != nil {
+				continue
+			}
+			for {
+				l := fastReadLine2()
+				if l == nil {
+					break
+				}
+				fmt.Printf("%s: %d '%s'\n", fname, len(l), l)
+			}
+		}
+		d.Close()
+	}
+}
+
+func TestFastReadLine(*testing.T) {
+	//fname := "/proc/1/smaps"
+	fname := "/etc/memstat.conf"
+
+	err := fastReadOpen(fname)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	for {
+		l := fastReadLine2()
+		if l == nil {
+			break
+		}
+		fmt.Printf("%s: %d '%s'\n", fname, len(l), l)
+	}
+	fastReadClose()
 }
 
 func TestScanner(*testing.T) {

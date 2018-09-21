@@ -16,6 +16,7 @@ var reservedVarNames = map[string]interface{}{
 	"thread_nb":  nil,
 	"threadnb":   nil,
 	"rss":        nil,
+	"pss":        nil,
 	"vsz":        nil,
 	"swap":       nil,
 	"iops":       nil,

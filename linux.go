@@ -2,7 +2,9 @@ package procfilter
 
 /* Linux specific code. Some of the gopsutils methods are too slow and this file contains their "fast" (upto 40x) counterparts.
 (The design is not similar enough for a merge with the original lib).
+WARNING: Some of the functions in this file are designed to be fast but have strict requirements for their safe usage. eg: fastRead() fastReadLine() ... Please read carefully the instructions.
 */
+import _ "net/http/pprof" // TODO debug only
 
 import (
 	"fmt"
@@ -13,11 +15,105 @@ import (
 )
 
 const ktCmdLine = "[kernel]" // Use this as a command line for kernel threads.
+const frBufferSize = 4096
 
-var readBuffer [4000]byte // Used as temp storage for content of files in /proc/[PID]/stat* or cmdline (sampling on our servers indicates <400 bytes).
+var frBuffer [frBufferSize]byte // Used as temp storage for content of files in /proc/[PID]/stat* or cmdline (sampling on our servers indicates <400 bytes).
+var frLineBuffer [1024]byte     // Used as temp storage for a line content (fastReadLine)
+var rli int                     // Position of next char in readBuffer
+var rll int                     // number of real bytes in readLineBuffer (near end of file we may get a parlialy filled buffer)
+var frFile *os.File             // File handle for fastReadLine.
+
+// fastReadOpen opens a file for fastReadLine.
+func fastReadOpen(fn string) error {
+	if frFile != nil {
+		frFile.Close()
+	}
+	rli = 0
+	rll = 0
+	var err error
+	frFile, err = os.Open(fn)
+	if err != nil {
+		trace("open err=%s", err)
+		return err
+	}
+	return nil
+}
+
+// fastReadClose close the current file for fastRead*.
+// Note that if you read files until EOF, then calling this function is not required.
+func fastReadClose() {
+	if frFile != nil {
+		frFile.Close()
+		frFile = nil
+	}
+	rli = 0
+	rll = 0
+}
+
+// fastReadByte reads one character from a file using a single static common buffer.
+// WARNING: You must call fastReadOpen first.
+// WARNING: Designed to be fast but has no guards against concurrent use. (single common  buffer with no mutex)
+// WARNING: you must check for err!=nil every
+func fastReadByte() (byte, error) {
+	if rli >= rll { // no more chars in the read buffer.
+		rll, _ = frFile.Read(frBuffer[:]) // Refill the read buffer
+		// Do not consider a partial read as a real error..
+		if rll == 0 { // Error or EOF
+			rli = 0
+			frFile.Close()
+			frFile = nil
+			return 0, os.ErrClosed
+		}
+		rli = 0
+	}
+	b := frBuffer[rli]
+	rli++
+	return b, nil
+}
+
+// fastReadLine reads a line from a file uing a single static common buffer.
+// WARNING: You must call fastReadOpen first.
+// WARNING: Designed to be fast but has no guards against concurrent use or big lines buffer overflow. (single common small buffer with no mutex)
+// WARNING: shares low level buffer with fastRead. So you cannot use both functions at the same time.
+func fastReadLine() []byte {
+	if frFile == nil { // Should call fastReadLineOpen()
+		return nil
+	}
+
+	var line = frLineBuffer[:0] // empty slice using the line buffer as backing array.
+	bi := rli
+	for {
+		if bi >= rll { // no more chars in the read buffer.
+			if rll > 0 {
+				line = append(line, frBuffer[rli:rll]...) // Keep the chunk of line that is at the end of the current read buffer.
+			}
+			rll, _ = frFile.Read(frBuffer[:]) // And refill the read buffer
+			// Do not consider a partial read as a real error..
+			if rll == 0 { // Error or EOF
+				rli = 0
+				frFile.Close()
+				frFile = nil
+				if len(line) != 0 {
+					return line
+				} else {
+					return nil
+				}
+			}
+			bi = 0
+			rli = 0
+		}
+		if frBuffer[bi] == '\n' {
+			line = append(line, frBuffer[rli:bi]...)
+			rli = bi + 1
+			return line
+		}
+		bi++
+	}
+	return nil
+}
 
 // fastRead reads a short file using a single static common buffer.
-// WARNING: Designed to be fast but has absolutly no guards against concurrent use or big files. (single common small buffer with no mutex)
+// WARNING: Designed to be fast but has no guards against concurrent use or big files buffer overflow. (single common small buffer with no mutex)
 func fastRead(fn string) ([]byte, error) {
 	//traceCaller(3, "fr: %s", fn)
 	f, err := os.Open(fn)
@@ -25,14 +121,14 @@ func fastRead(fn string) ([]byte, error) {
 		trace("open err=%s", err)
 		return nil, err
 	}
-	n, err := f.Read(readBuffer[:])
+	n, err := f.Read(frBuffer[:])
 	f.Close()
 	if err != nil && err != io.EOF {
 		trace("read err=%s", err)
 		return nil, err
 	}
 	//fmt.Printf("fr: read ok: %s\n", fn)
-	return readBuffer[0:n], nil
+	return frBuffer[0:n], nil
 }
 
 // procFileName create a string for file names in /proc/[PID]/[name]
@@ -271,9 +367,8 @@ func (ps *procStat) updateFromStat() error {
 	return nil
 }
 
-// Swap is not available in /proc/[pid]/stat.
-// We can get it from smaps or status and status is shorter to load/parse.
-// The key: values change between kernel versions or process types (kernel workers vs process) so we have to search for the key.
+// Find some values (lswap, tgid, ...) found only in /proc/[pid]/status.
+// The key: values change between kernel versions or process types (kernel workers vs process) so we have to search for the keys.
 func (ps *procStat) updateFromStatus() {
 	if ps.statusTs == stamp || ps.status == DEAD {
 		return
@@ -341,16 +436,77 @@ func (ps *procStat) updateFromStatus() {
 			i++
 		}
 		if i >= sl {
-			return // end of file, swap not found.
+			return // end of file, some values were not found.
 		}
 		if s[i] == '\n' {
 			i++
 			if i >= sl {
-				return // end of file, swap not found.
+				return // end of file, some values were not found.
 			}
 			sol = true
 		}
 	}
+}
+
+// PSS (Proportional Set Size) is available in /proc/[pid]/smaps.
+// We have to summ all Pss: lines.
+func (ps *procStat) updateFromSmaps() {
+	// Verified with:
+	//   cd /proc; for PID in [0-9]*; do PSS=$(echo $(egrep "^Pss:" /proc/$PID/smaps 2>/dev/null | egrep -o "[0-9]+" | sed -r 's/$/+/' | tr -d '\n')0 | bc); if [[ $PSS != 0 ]]; then echo "$PSS kB : $PID : $(cat /proc/$PID/cmdline)"; fi ; done | sort -n
+	if ps.smapsTs == stamp || ps.status == DEAD {
+		return
+	}
+	ps.smapsTs = stamp
+	if ps.pfnSmaps == "" {
+		ps.pfnSmaps = procFileName(ps.pid, "smaps")
+	}
+	err := fastReadOpen(ps.pfnSmaps)
+	if err != nil {
+		ps.dead(0)
+		return
+	}
+	var totpss int
+	var kw uint32 // The bytes from 'Pss:' can be stored on a single 32b word.
+	for {
+		c, err := fastReadByte()
+		if err != nil {
+			break
+		}
+		kw = (kw << 8) + uint32(c)
+		if kw != 0x5073733a { // echo -n "Pss:" | od -t x4 --endian=big
+			continue
+		}
+		kw = 0
+		// We matched "Pss:", now search for the digits.
+		var pss int = 0
+	WSpaces:
+		c, err = fastReadByte()
+		if err != nil {
+			break
+		}
+		if c == ' ' {
+			goto WSpaces
+		}
+		var unread = true
+	Digits:
+		if !unread {
+			c, err = fastReadByte()
+			if err != nil {
+				break
+			}
+		} else {
+			unread = false
+		}
+		if (c >= '0') && (c <= '9') {
+			pss = pss*10 + int(c-'0')
+			goto Digits
+		}
+		totpss += pss
+		// skip the "kB: sctring.
+		_, _ = fastReadByte()
+		_, _ = fastReadByte()
+	}
+	ps.pss = uint64(totpss) << 10 // kB to bytes <=> *1024 <=> left shift 10
 }
 
 // Init cmdline from the content of /proc/[pid]/cmdline. If cmdline is empty assume this is a kernel thread and fix its cmd value to remove all CPU related info.
@@ -381,7 +537,7 @@ func (ps *procStat) updateFromCmdline() error {
 				s[i] = ' ' // replace the \0 separating args by a plain whitespace. We do not use the fine arg by arg struct of argv[]
 			}
 		}
-		sl-- // The last char is a 0, skup its copy.
+		sl-- // The last char is a 0, skip its copy.
 		ps.cmdLine = string(s)
 		ps.exe = ps.cmdLine[0:ee] // TODO This assumes that we have one char per byte... fishy if not utf8/ascii...
 	}

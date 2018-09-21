@@ -45,6 +45,7 @@ type procStat struct {
 	stamp       tStamp // last stamp during which this process found
 	pfnStat     string // "/proc/[pid]/stat"
 	pfnStatus   string // "/proc/[pid]/status"
+	pfnSmaps    string // "/proc/[pid]/smaps"
 	pfnIo       string // "/proc/[pid]/io"
 	cpu         uint64 // total cpu used jiffies at updtime.         // user time
 	cmd         string
@@ -63,6 +64,9 @@ type procStat struct {
 	swap        uint64
 	user        string
 	group       string
+	smapsTs     tStamp
+	pss         uint64  // like RSS but with a better accounting of shared memory.
+	rprss       float32 // ratio PSS/RSS
 	fdNbTs      tStamp
 	fdNb        uint32
 	ioTs        tStamp
@@ -310,15 +314,43 @@ func (p *procStat) Path() (string, error) {
 	return p.path, err
 }
 
+// TODO Debug only.
+var rssc, pssc int64
+
+// RSS is in fact a best effort that will try to take into account the number of processes that are using the same shared memory maps (ie: the PSS value). The heuristic that is used to avoid the costly computation of the PSS is based on the difference between RSS and initial PSS. If the difference is big then the PSS is computed and returned in place of the simple but far from exact RSS.
 func (p *procStat) RSS() (uint64, error) {
 	if p.IsThread() {
 		return 0, nil
 	}
-	if p.statTs == stamp {
+
+	// Refresh RSS from .../stats file.
+	p.updateFromStat()
+	// Refreshing PSS from the (big) .../smaps file is costly so try to avoid it.
+	if p.rss < 8*1024*1024 { // RSS < 8M we ignore the RSS vs PSS difference.
 		return p.rss, nil
 	}
-	p.updateFromStat()
-	return p.rss, nil
+	if p.smapsTs == 0 || stamp == 2 || p.rprss < 0.1 {
+		// Unknown pss => refresh PSS.
+		// We also force a refresh once in a while (about once every 253*20s = 84min) in case pss and rss have diverged to much from initial values.
+		// We also refresh if rss is significantly bigger than pss, but this causes too much reads of /proc/[PID]/smaps and this is really costly (kernel usage x10).
+		pss, _ := p.PSS()
+		p.rprss = float32(pss) / float32(p.rss) // Update the PSS/RSS ratio for later approcimations.
+		return pss, nil
+	}
+	// The raw RSS * the last PSS/RSS ratio is a good enough approximation in most cases.
+	arss := uint64(float32(p.rss) * p.rprss)
+	return arss, nil
+}
+
+func (p *procStat) PSS() (uint64, error) {
+	if p.IsThread() {
+		return 0, nil
+	}
+	if p.smapsTs == stamp {
+		return p.pss, nil
+	}
+	p.updateFromSmaps() // TODO debug
+	return p.pss, nil
 }
 
 func (p *procStat) VSZ() (uint64, error) {

@@ -264,7 +264,7 @@ eg: `top(vsz,1)`
 CPU usage. Unit is implicity %.  
 
 * RSS  
-Resident memory size. In normal (non swap) situation this indicates how much RAM the process uses.  
+Resident memory size (in RAM). In normal (non swap) situation this indicates how much RAM the process uses. This value is not what you see as RSS in most tools (like top). It tries hard (but wilh a low CPU cost) to approximate the quantity of RAM really used by the process. For example it takes the shared memory pages into account (a bit like the usual PSS). So a page that is shared by 10 processes will account only 1/10th for each one.  
 
 * VSZ  
 Virtual memory size.  
