@@ -42,8 +42,17 @@ outputs/influxdb
 inputs/postgresql
 inputs/postgresql_extensible
 '
-#inputs/postgresql
-#inputs/postgresql_extensible
+
+# Windows context: Any plugin not in this white list will be disabled if -w is used.
+Plugins_windows_white_list='
+inputs/exec
+inputs/win_perf_counters
+processors/converter
+processors/topk
+outputs/file
+outputs/influxdb
+'
+
 
 # These plugins will be disabled if using -b
 Plugins_black_list='
@@ -91,18 +100,20 @@ inputs/zookeeper
 function usage(){
     cat <<EOF
 Run this script to graft the procfilter plugin sources in the original telegraf source tree.
-  -b: Remove unwanted/unused plugins found in a black list from the telegraf build. (see the source to edit the black list.)
   -w: Remove unwanted/unused plugins that are not found in a white list from the telegraf build. (see the source to edit the white list.)
+  -b: Remove unwanted/unused plugins found in a black list from the telegraf build. (see the source to edit the black list.)
+  -W: Windows donctext. Remove unwanted/unused plugins that are not found in a white list from the telegraf build. (see the source to edit the white list.)
   -s: display the size of all plugins (helps to select unwanted plugins).
 EOF
 }
 
 
 function parse_opts(){
-    while getopts "bwsh" opt; do
+    while getopts "bwWsh" opt; do
 	case $opt in
 	    b) Black=1;;
-	    w) White=1;;	    
+	    w) White=1;;
+    	    W) Windows=1;;	    
 	    s) Size=1;;
 	    h) usage;
 	       exit 0;;
@@ -136,7 +147,7 @@ function restore(){
 function disable_plugin(){
     p="$1"
     for i in $Plugin_imports; do
-	sed -r -i 's|^([^/]*)(github.com/influxdata/telegraf/plugins/'$p')(["].*)|//\1\2\3 // disabled by graft-plugin.sh|' $i
+	sed -r -i 's|^([^/]*)(github.com/influxdata/telegraf/plugins/'$p')(["].*)|//\1\2\3 // disabled by graft-plugin.sh|' "$i"
     done
 }
 
@@ -249,7 +260,13 @@ function main(){
 	plugin_sizes
 	exit 0
     fi
-    add_procfilter
+    if [[ $Windows = 1 ]]; then
+	echo "Using a Windows white list."
+	disable_plugins_wl "$Plugins_windows_white_list"
+    else
+	# procfilter is not compatible with windows.
+	add_procfilter
+    fi
     exec_size
     echo "Final binary size: ${Ret_size}"
 }
