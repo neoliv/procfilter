@@ -33,7 +33,7 @@ func fastReadOpen(fn string) error {
 	var err error
 	frFile, err = os.Open(fn)
 	if err != nil {
-		trace("open err=%s", err)
+		//trace("open err=%s", err)
 		return err
 	}
 	return nil
@@ -118,13 +118,13 @@ func fastRead(fn string) ([]byte, error) {
 	//traceCaller(3, "fr: %s", fn)
 	f, err := os.Open(fn)
 	if err != nil {
-		trace("open err=%s", err)
+		//trace("open err=%s", err)
 		return nil, err
 	}
 	n, err := f.Read(frBuffer[:])
 	f.Close()
 	if err != nil && err != io.EOF {
-		trace("read err=%s", err)
+		//trace("read err=%s", err)
 		return nil, err
 	}
 	//fmt.Printf("fr: read ok: %s\n", fn)
@@ -276,7 +276,7 @@ func (ps *procStat) initFromStat() bool {
 			i++ // Skip the '('.
 			resstr, i = fastParseUntil(s, i, ')')
 			ps.cmd = resstr
-			trace("pid=%d cmd=%s", ps.pid, ps.cmd)
+			//trace("pid=%d cmd=%s", ps.pid, ps.cmd)
 		case 3: // 3 ppid
 			res, i = fastParseUint64(s, i)
 			ps.ppid = tPid(res)
@@ -301,7 +301,7 @@ func (ps *procStat) initFromStat() bool {
 		case 23: // rss
 			res, i = fastParseUint64(s, i)
 			ps.rss = res * PageSize
-			ps.trace(4)
+			//ps.trace(4)
 			return true // Last field we need to parse.
 		default: // Skip this field.
 			i++
@@ -333,7 +333,6 @@ func (ps *procStat) updateFromStat() error {
 	var f int      // field number (0 is pid)
 	var res uint64 // holds the return value of fastParseInt
 	for i := 0; i < sl; i++ {
-		//fmt.Printf("f:%d i:%d c:%c\n", f, i, s[i])
 		switch f {
 		case 13: // utime is number of jiffies used by this process in user mode.
 			res, i = fastParseUint64(s, i)
@@ -350,8 +349,6 @@ func (ps *procStat) updateFromStat() error {
 		case 23: // rss
 			res, i = fastParseUint64(s, i)
 			ps.rss = res * PageSize
-			//trace("pid=%d tnb=%d rss=%d vsz=%d", ps.pid, ps.threadNb, ps.rss, ps.vsz)
-			ps.trace(4)
 			return nil // Last field we need to parse.
 		default: // Skip this field.
 			i++
@@ -400,7 +397,7 @@ func (ps *procStat) updateFromStatus() {
 					if '0' <= s[i] && s[i] <= '9' {
 						res, i = fastParseUint64(s, i)
 						ps.tgid = tPid(res)
-						trace("pid=%d tgid=%d", ps.pid, ps.tgid)
+						//trace("pid=%d tgid=%d", ps.pid, ps.tgid)
 						break
 					}
 				}
@@ -418,14 +415,15 @@ func (ps *procStat) updateFromStatus() {
 				i = i + 5
 				id, i = fastParseUint64(s, i)
 				ps.gid = int32(id)
-			} else if s[i] == 'V' && s[i+3] == 'w' && s[i+5] == 'p' { // discriminate for VmSwap: key
-				//VmSwap:	      180 kB
+			} else if s[i] == 'V' && s[i+2] == 'S' && s[i+5] == 'p' {
+				// On RH<6 we don't have VmSwap.
+				// VmSwap:  7234112 kB
 				i += 7
 				for ; i < sl; i++ {
 					if '0' <= s[i] && s[i] <= '9' {
 						res, i = fastParseUint64(s, i)
 						ps.swap = res * 1024 // status contais the  swap in kB.
-						trace("pid=%d tgid=%d swap=%d", ps.pid, ps.tgid, ps.swap)
+						//trace("pid=%d tgid=%d swap=%d", ps.pid, ps.tgid, ps.swap)
 						return // swap is the last value we want to extract.}
 					}
 				}
@@ -517,7 +515,7 @@ func (ps *procStat) updateFromCmdline() error {
 	}
 	// TODO use a static buffer to avoid gc?
 	s, err := ioutil.ReadFile(procFileName(ps.pid, "cmdline"))
-	trace("cmdline: %d '%s'", len(s), s)
+	//trace("cmdline: %d '%s'", len(s), s)
 	if err != nil {
 		ps.cmdLine = shortLivedString
 		ps.dead(0)
@@ -527,7 +525,7 @@ func (ps *procStat) updateFromCmdline() error {
 	if sl == 0 {
 		// kernel thread. Rework its name to make it easier to aggregate later.
 		ps.cmd = shortKernelCmd(ps.cmd)
-		trace("kernel thread pid=%d new cmd=%s", ps.pid, ps.cmd)
+		//trace("kernel thread pid=%d new cmd=%s", ps.pid, ps.cmd)
 		ps.cmdLine = ktCmdLine
 	} else {
 		// Fill the exe field before loosing the \0 marker.

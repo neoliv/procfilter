@@ -322,9 +322,9 @@ func (f *topFilter) Apply() error {
 			}
 		}
 	default:
-		return fmt.Errorf("unknownsort criteria %q", f.crit)
+		return fmt.Errorf("unknown sort criteria %q", f.crit)
 	}
-	// sort it according to rss
+	// sort it according to criteria
 	switch f.crit {
 	case "rss":
 		sort.Sort(byRSS(stats))
@@ -404,7 +404,6 @@ func (f *exceedFilter) Apply() error {
 		return err
 	}
 	iStats := input.Stats()
-	eo := []*procStat{}
 	m := map[tPid]stat{}
 	for pid, s := range iStats.pid2Stat {
 		switch f.crit { // TODO invert for<->switch for perfformance?
@@ -415,8 +414,6 @@ func (f *exceedFilter) Apply() error {
 			}
 			if int64(rss) > f.iv {
 				m[pid] = s
-			} else {
-				eo = unpackStatAsSlice(s, eo)
 			}
 		case "vsz":
 			vsz, err := s.VSZ()
@@ -425,8 +422,6 @@ func (f *exceedFilter) Apply() error {
 			}
 			if int64(vsz) > f.iv {
 				m[pid] = s
-			} else {
-				eo = unpackStatAsSlice(s, eo)
 			}
 		case "swap":
 			swap, err := s.Swap()
@@ -435,8 +430,6 @@ func (f *exceedFilter) Apply() error {
 			}
 			if int64(swap) > f.iv {
 				m[pid] = s
-			} else {
-				eo = unpackStatAsSlice(s, eo)
 			}
 		case "thread_nb":
 			tnb, err := s.ThreadNumber()
@@ -445,8 +438,6 @@ func (f *exceedFilter) Apply() error {
 			}
 			if int64(tnb) > f.iv {
 				m[pid] = s
-			} else {
-				eo = unpackStatAsSlice(s, eo)
 			}
 		case "fd_nb":
 			tnb, err := s.FDNumber()
@@ -455,15 +446,11 @@ func (f *exceedFilter) Apply() error {
 			}
 			if int64(tnb) > f.iv {
 				m[pid] = s
-			} else {
-				eo = unpackStatAsSlice(s, eo)
 			}
 		case "process_nb":
 			pnb := s.ProcessNumber()
 			if int64(pnb) > f.iv {
 				m[pid] = s
-			} else {
-				eo = unpackStatAsSlice(s, eo)
 			}
 		case "cpu":
 			cpu, err := s.CPU()
@@ -472,8 +459,6 @@ func (f *exceedFilter) Apply() error {
 			}
 			if float64(cpu) > f.fv {
 				m[pid] = s
-			} else {
-				eo = unpackStatAsSlice(s, eo)
 			}
 		case "io":
 			io, err := s.IO()
@@ -482,8 +467,6 @@ func (f *exceedFilter) Apply() error {
 			}
 			if int64(io) > f.iv {
 				m[pid] = s
-			} else {
-				eo = unpackStatAsSlice(s, eo)
 			}
 		case "iobps":
 			io, err := s.IObps()
@@ -492,17 +475,15 @@ func (f *exceedFilter) Apply() error {
 			}
 			if int64(io) > f.iv {
 				m[pid] = s
-			} else {
-				eo = unpackStatAsSlice(s, eo)
 			}
 		default:
 			return fmt.Errorf("unknown sort criteria %q", f.crit)
 		}
 	}
 	// Pack all other procStat in one stat.
-	o := NewPackStat(eo)
-	o.other = fmt.Sprintf("_other.exceed.%s.%s", f.crit, f.rv)
-	m[o.PID()] = o
+	//o := NewPackStat(eo)
+	//o.other = fmt.Sprintf("_other.exceed.%s.%s", f.crit, f.rv)
+	//m[o.PID()] = o
 	f.pid2Stat = m
 	return nil
 }
@@ -522,20 +503,20 @@ func (f *exceedFilter) Parse(p *Parser) error {
 	f.rv = lit
 	// Parse the value depending on the chosen criteria.
 	switch f.crit {
-	case "rss", "vsz", "swap", "thread_nb", "process_nb", "fd_nb":
+	case "rss", "vsz", "swap", "thread_nb", "process_nb", "fd_nb", "iobps":
 		err := p.parseArgInt(&f.iv)
 		if err != nil {
-			return p.syntaxError(fmt.Sprintf("exceed with '%s; criteri requires an integer as threshold", f.crit))
+			return p.syntaxError(fmt.Sprintf("exceed with '%s' criteri requires an integer as threshold", f.crit))
 		}
 	case "cpu":
 		var v int64
 		err := p.parseArgInt(&v)
 		if err != nil {
-			return p.syntaxError(fmt.Sprintf("exceed with '%s; criteri requires an integer as threshold", f.crit))
+			return p.syntaxError(fmt.Sprintf("exceed with '%s' criteri requires an integer as threshold", f.crit))
 		}
 		f.fv = float64(v)
 	default:
-		return fmt.Errorf("unknownexceed criteria %q", f.crit)
+		return fmt.Errorf("unknown exceed criteria %q", f.crit)
 	}
 
 	err = p.parseArgLastFilter(&f.input)

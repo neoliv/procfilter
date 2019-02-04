@@ -523,6 +523,10 @@ func preprocess(s string) string {
 					ns += "# FAILED " + l + "\n"
 					continue
 				}
+				if len(inc) == 0 {
+					ns += "# EMPTY " + l + "\n"
+					continue
+				}
 				if (inc[len(inc)-1:])[0] != byte('\n') {
 					// Be sure to have a \n at then end of the included file.
 					inc = append(inc, byte('\n'))
