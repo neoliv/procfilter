@@ -41,6 +41,18 @@ outputs/file
 outputs/influxdb
 inputs/postgresql
 inputs/postgresql_extensible
+inputs/mongodb
+inputs/elasticsearch
+inputs/haproxy
+'
+
+# Any plugin not in this white list will be disabled if -V is used.
+# (white list for vmware dedicated telegraf ninary)
+Plugins_vmware_white_list='
+inputs/exec
+inputs/vsphere
+outputs/file
+outputs/influxdb
 '
 
 # Windows context: Any plugin not in this white list will be disabled if -w is used.
@@ -102,18 +114,19 @@ function usage(){
 Run this script to graft the procfilter plugin sources in the original telegraf source tree.
   -w: Remove unwanted/unused plugins that are not found in a white list from the telegraf build. (see the source to edit the white list.)
   -b: Remove unwanted/unused plugins found in a black list from the telegraf build. (see the source to edit the black list.)
-  -W: Windows donctext. Remove unwanted/unused plugins that are not found in a white list from the telegraf build. (see the source to edit the white list.)
+  -V: Like -w but for a Vsphere dedicated binary.
+  -W: Like -w but for a Windows dedicated binary.
   -s: display the size of all plugins (helps to select unwanted plugins).
 EOF
 }
 
 
 function parse_opts(){
-    while getopts "bwWsh" opt; do
+    while getopts "bwVWsh" opt; do
 	case $opt in
 	    b) Black=1;;
 	    w) White=1;;
-    	    W) Windows=1;;	    
+ 	    V) Vsphere=1;;	    	        	    W) Windows=1;;	    	    W) Windows=1;;	    
 	    s) Size=1;;
 	    h) usage;
 	       exit 0;;
@@ -260,11 +273,17 @@ function main(){
 	plugin_sizes
 	exit 0
     fi
-    if [[ $Windows = 1 ]]; then
+
+    if [[ $Vsphere = 1 ]]; then
+	echo "Using a Vsphere/Vcenter/Vmware white list."
+	disable_plugins_wl "$Plugins_vmware_white_list"
+	disable_plugin "inputs/procfilter"
+    elif [[ $Windows = 1 ]]; then
 	echo "Using a Windows white list."
 	disable_plugins_wl "$Plugins_windows_white_list"
+	disable_plugin "inputs/procfilter"
     else
-	# procfilter is not compatible with windows.
+	# The usual Linux binary wit procfilter.
 	add_procfilter
     fi
     exec_size

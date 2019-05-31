@@ -27,6 +27,7 @@ type Parser struct {
 	rewrites     []filter // special rewrite filters
 	eln          int      // last error line number
 	ecn          int      // lst error col number
+	afid         int      // anonymous filter id (eg: _ renammed as _1)
 	buf          struct {
 		tok tokenType // last read token
 		lit string    // last read literal
@@ -112,8 +113,8 @@ func (p *Parser) Parse() error {
 			}
 			return nil
 		}
-		// First token should be an indentifier
-		if tok != tTIdentifier {
+		// First token should be an identifier (_ is allowed in this special case)m
+		if name != "_" && tok != tTIdentifier {
 			return p.syntaxError(fmt.Sprintf("found %q, expecting identifier", name))
 		}
 		// rewrite(...)
@@ -133,6 +134,12 @@ func (p *Parser) Parse() error {
 		// rewrite() is handled before this point.
 		switch tok {
 		case tTLeftArrow: // [name <-] filter
+			if name == "_" {
+				// special case where the name of the filter is not relevant.
+				// replace _ with an new internal name (_%d).
+				name = fmt.Sprintf("_%d", p.afid)
+				p.afid++
+			}
 			f, err := p.parseFilter(name)
 			if err != nil {
 				return err
@@ -143,7 +150,6 @@ func (p *Parser) Parse() error {
 				return err
 			}
 		case tTEqual: // name = measurement <- filter
-			//if
 			m, err := p.parseMeasurement(name)
 			if err != nil {
 				return err

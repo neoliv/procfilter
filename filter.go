@@ -83,6 +83,8 @@ func name2FuncFilter(funcName string) filter {
 		f = new(filtersFilter)
 	case "revar":
 		f = new(revarFilter)
+	case "setvar":
+		f = new(setvarFilter)
 	default:
 		f = nil
 	}
@@ -208,6 +210,68 @@ func (f *revarFilter) Parse(p *Parser) error {
 }
 
 func (f *revarFilter) Stats() *stats {
+	return &f.stats
+}
+
+// Set a variable using a static value
+type setvarFilter struct {
+	stats
+	value  string
+	vn     string // variable name for the rewritten string.
+	inputs []filter
+}
+
+func (f *setvarFilter) Apply() error {
+	err := applyAll(f.inputs)
+	if err != nil {
+		return err
+	}
+	if len(f.inputs) == 1 {
+		// simple case with only one input -> copy its stats
+		f.pid2Stat = f.inputs[0].Stats().pid2Stat
+	} else {
+		// Build a new map from all procstats found in inputs.
+		for _, input := range f.inputs {
+			for pid, s := range input.Stats().pid2Stat {
+				f.pid2Stat[pid] = s
+			}
+		}
+	}
+	p2s := f.pid2Stat
+
+	for _, s := range p2s {
+		pvars := s.PVars()
+		vars := *pvars
+		if *pvars == nil {
+			vars = map[string]string{}
+			*pvars = vars
+		}
+		vars[f.vn] = f.value
+	}
+	return nil
+}
+
+func (f *setvarFilter) Parse(p *Parser) error {
+	// eg: setvar("value",name)
+	err := p.parseArgString(&f.value)
+	if err != nil {
+		return err
+	}
+	err = p.parseArgIdentifier(&f.vn)
+	if err != nil {
+		return err
+	}
+	if _, reserved := reservedVarNames[f.vn]; reserved {
+		return p.syntaxError(fmt.Sprintf("declaring a variable with a reserved name '%s'", f.vn))
+	}
+	err = p.parseArgFilterList(&f.inputs, 1)
+	if err != nil {
+		return err
+	}
+	return p.parseSymbol(')')
+}
+
+func (f *setvarFilter) Stats() *stats {
 	return &f.stats
 }
 
@@ -576,8 +640,6 @@ func (f *pidFilter) Parse(p *Parser) error {
 	if tok == tTString {
 		f.file = lit
 	} else if tok == tTNumber {
-		{
-		}
 		i, err := strconv.Atoi(lit)
 		if err != nil {
 			return p.syntaxError(fmt.Sprintf("found %q, expecting an integer", lit))
@@ -586,6 +648,7 @@ func (f *pidFilter) Parse(p *Parser) error {
 	} else {
 		return p.syntaxError(fmt.Sprintf("found %q, expecting a string or number", lit))
 	}
+	p.parseArgSep()
 	err := p.parseArgLastFilter(&f.input)
 	if err != nil {
 		return err

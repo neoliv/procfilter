@@ -6,7 +6,7 @@ Procfilter is a telegraf plugin that gathers metrics related to processes (CPU, 
 
 The procfilter plugin monitors system resource usage by process or group of processes. If offers filters to choose what processes you want to monitor. You can place processes in groups to get synthetic values (eg: get the total CPU usage of the user joe by putting all its processes in one single process set.)
 
-This plugin has been created to improve upon the default procstat plugin that is able to collect per process metrics but is not able to aggregate processes metrics (or filter using complex rules).
+This plugin has been created to improve upon the default procstat plugin that is able to collect per process metrics but is not able to aggregate processes metrics (or filter them using complex rules).
 
 
 ## Install
@@ -62,7 +62,7 @@ This measurement named m1 will emit cpu and rss field values tagged with the com
 
 * Include:  
 You can include files in your script with `'include('file')`.  
-eg: `include('/etc/telegraf/subscript.inc')`
+eg: `include('/etc/telegraf/inc_script')`
 
 
 ### Example script:
@@ -73,7 +73,7 @@ eg: `include('/etc/telegraf/subscript.inc')`
     root <- user(0)
     hogs <- top(rss,3)
     apache <- user('apache')
-    tomcat <- children(pid("/var/run/tomcat.pid"))
+    tomcat <- pid("/var/run/tomcat.pid")
 
     hogs = tag(cmd) field(rss,cmdline) <- hogs
     wl_root = field(cpu,rss) <- pack(root)
@@ -85,9 +85,11 @@ More examples at the end of this document.
 
 ## Filters
 
-To simplify and clarify scripts, filters can be nammed.  
-eg: `f1 <- all`  
-Declares a filter nammed 'f1' that will select all processes (effectively being an alias to the predefined 'all' filter).
+To simplify and clarify scripts, filters can be nammed or stay anonymous. 
+eg: `bash <- cmd('bash') 
+Declares a filter nammed 'bash' that will contain all bash processes.
+eg: `_ <- setvar('myvalue', mytag, cmd('mycommand')) '`
+Creates an anonymous filter that will trigger the sertvar filter on all 'mycommand' processes. Using _ as a name will keep the filter namespace cleaner if you do not need this filter later on. This is especially useful with operators like 'setvar' and 'revar' that only decorate processes without filtering/grouping them.  
 
 The order of declaration is meaningful and you cannot do forward references to yet undeclared filters.
 
@@ -248,11 +250,18 @@ Build aggregates of processes with the same user and command.
 
 ## User defined fields/variables
 
-If you need to pack processes using a criteria that is not available you can synthetize your own.
-revar(criteria,'matching re','replacment re','new field name', input)
-eg: `oracle_sid <- revar(exe,'ora_[^_]+_([0-9a-zA-Z]+)|oracle([0-9a-zA-Z]+).*','$1',oracle_sid,user('oracle')`
-The revar() will not filter out any processes but will synthetize a new field 'oracle_sid' that is the result of the regular expression find/replace on the command name to extract the SID. Note the use of the group syntax $1 to use part of the matching RE in the final value. 
-As a criteria you can use cmd, cmd_line, exe, user, group or a previously synthetized user field.
+If you need a criteria that is not available you can synthetize your own. This is called a 'user defined variable'. You can use these variables as any other predefined criteria (pack according to its value, output its value in measurements, ...)
+
+* Setvar  
+setvar('value',user_variable, input)
+eg: `_ <- setvar('critical', level, cmd('sshd'))
+This will add a variable nammed 'level' with the value 'critical' on all sshd processes. You can later on use 'tag(level)' or 'field(level)' to output the value of this new variable. You can also do a packby(level) to group processes according to the value set in 'level'.  
+
+* Revar  
+revar(criteria,'matching re','replacment re',user_variable, input)
+eg: `_ <- revar(exe,'ora_[^_]+_([0-9a-zA-Z]+)|oracle([0-9a-zA-Z]+).*','$1',oracle_sid,user('oracle'))`
+The revar() will not filter out any processes but will synthetize a new variable 'oracle_sid' that is the result of the regular expression find/replace on the command name to extract the SID. Note the use of the group syntax $1 to use part of the matching RE in the final value. 
+As a criteria you can use cmd, cmd_line, exe, user, group or a previously synthetized user variable.
 
 ## Criteria
 
