@@ -1,4 +1,4 @@
-anony# Procfilter
+# Procfilter
 
 Procfilter is a telegraf plugin that gathers metrics related to processes (CPU, RSS, ...). It is a bit like the default procstat but offers a lot more options.
 
@@ -88,7 +88,7 @@ More examples at the end of this document.
 To simplify and clarify scripts, filters can be nammed or stay anonymous.  
 eg: `bash <- cmd('bash')  
 Declares a filter nammed 'bash' that will contain all bash processes.  
-eg: `_ <- setvar('myvalue', mytag, cmd('mycommand'))`
+eg: `_ <- setvar('myvalue', mytag, cmd('mycommand'))`  
 Creates an anonymous filter that will trigger the sertvar filter on all 'mycommand' processes. Using _ as a name will keep the filter namespace cleaner if you do not need this filter later on. This is especially useful with operators like 'setvar' and 'revar' that only decorate processes without filtering/grouping them.  
 
 The order of declaration is meaningful and you cannot do forward references to yet undeclared filters.
