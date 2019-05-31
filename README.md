@@ -87,7 +87,7 @@ More examples at the end of this document.
 
 To simplify and clarify scripts, filters can be nammed or stay anonymous.  
 eg: `bash <- cmd('bash')  
-Declares a filter nammed 'bash' that will contain all bash processes.
+Declares a filter nammed 'bash' that will contain all bash processes.  
 eg: `_ <- setvar('myvalue', mytag, cmd('mycommand'))`
 Creates an anonymous filter that will trigger the sertvar filter on all 'mycommand' processes. Using _ as a name will keep the filter namespace cleaner if you do not need this filter later on. This is especially useful with operators like 'setvar' and 'revar' that only decorate processes without filtering/grouping them.  
 
@@ -250,11 +250,11 @@ Build aggregates of processes with the same user and command.
 
 ## User defined fields/variables
 
-If you need a criteria that is not available you can synthetize your own. This is called a 'user defined variable'. You can use these variables as any other predefined criteria (pack according to its value, output its value in measurements, ...)
+If you need a criteria that is not available you can synthetize your own. This is called a 'user defined variable'. You can use these variables as any other predefined criteria (pack according to its value, output its value in measurements, ...)  
 
 * Setvar  
-setvar('value',user_variable, input)
-eg: `_ <- setvar('critical', level, cmd('sshd'))
+setvar('value',user_variable, input)  
+eg: `_ <- setvar('critical', level, cmd('sshd'))`  
 This will add a variable nammed 'level' with the value 'critical' on all sshd processes. You can later on use 'tag(level)' or 'field(level)' to output the value of this new variable. You can also do a packby(level) to group processes according to the value set in 'level'.  
 
 * Revar  
